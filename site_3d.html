@@ -133,6 +133,7 @@ const LEAF = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6
 
   // ---------- sky, sun, environment ----------
   const sky = new THREE.Sky(); sky.scale.setScalar(20000); scene.add(sky);
+  scene.fog = new THREE.Fog(0xd8d2c4, 160, 950);  // sky is a ShaderMaterial without fog, so only the ground hazes
   const envSky = new THREE.Sky(); envSky.scale.setScalar(1000);
   const envScene = new THREE.Scene(); envScene.add(envSky);
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -252,7 +253,7 @@ const LEAF = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6
             diffuseColor.rgb *= mix(0.8, 1.16, texture2D(detail, vUv * ${name === "terrain" ? "200.0" : "60.0"}).r);
             #endif`);
         };
-        if (name === "grass" && !m.map) { m.map = grassTex.clone(); m.map.encoding = THREE.LinearEncoding; m.map.repeat.set(20, 20); }
+        if (name === "grass") { m.map = null; m.onBeforeCompile = () => {}; m.color = new THREE.Color("#9c8a62"); }  // distant backdrop: plain tone, no tiling
       } else if (m.map) { m.map.anisotropy = renderer.capabilities.getMaxAnisotropy(); }
       if (o.material.map) o.material.needsUpdate = true;
     });

@@ -125,3 +125,4 @@ This is the shared brief for every house concept. Each designer gets a separate 
 - **At most one or two arched openings on the whole house,** for example the front door or one feature window.
 - **Everything else rectangular,** in black steel-framed glazing.
 - **Never** several arched gables or rows of arched windows. This applies even to the Mediterranean and French styles.
+- **Client clarification: no arches on big windows, ever.** All large glazing, including the north courtyard glass, gable glazing and sliding or stacker doors, is rectangular. An arch is allowed only on a front door or a small feature opening.
