@@ -1,7 +1,6 @@
 # Site photos — 36 Waugh Street, Griffith (taken from the rear of the lot, looking to the street)
 
-The client's five site photos were shared in the chat but have not been saved as files yet. Put the
-image files in this folder when they're uploaded. What they show:
+Photos: `rear_to_street_1.jpg` … `rear_to_street_5.jpg` (overcast day). What they show:
 
 - **View**: from the high rear of the lot there is a wide, open view south-east and east over Griffith
   town and the flat irrigation plains to the horizon (low hills visible to the east/north-east).
