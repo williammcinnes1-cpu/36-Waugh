@@ -1,0 +1,44 @@
+{
+ "id": "white_weatherboard",
+ "name": "White Modern Weatherboard (quick sketch)",
+ "file": "designs/white_weatherboard.txt",
+ "note": "Quick concept: the farmhouse layout re-clad in white horizontal weatherboard with a white rendered base and dark roof. A rough idea only, not polished.",
+ "facts": [
+  [
+   "Lot area",
+   "≈1,093 m²"
+  ],
+  [
+   "Zoning",
+   "R1 General Residential"
+  ],
+  [
+   "House + garage footprint",
+   "418 m² (38%)"
+  ],
+  [
+   "Floor level",
+   "157.6 m AHD"
+  ],
+  [
+   "Earthworks depth",
+   "cut ≤2.8 m · fill ≤1.9 m"
+  ],
+  [
+   "Cut / fill volume",
+   "≈598 / 291 m³"
+  ],
+  [
+   "Net soil",
+   "≈307 m³ to remove"
+  ],
+  [
+   "Pool excavation",
+   "≈60 m³ extra"
+  ],
+  [
+   "Bushfire prone",
+   "rear half (vegetation buffer)"
+  ]
+ ]
+}
