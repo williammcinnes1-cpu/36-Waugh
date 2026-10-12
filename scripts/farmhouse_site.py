@@ -33,10 +33,11 @@ DESIGN = {
     "main": (1.0, 15.6, 9.4, 21.4),        # single storey + attic, ridge parallel to the street
     "wing": (15.6, 23.0, 9.6, 24.6),       # two-storey gable wing facing the street
     "rear": (1.0, 9.0, 21.4, 32.5),        # single-storey living wing along the SW side
-    "verandah": (1.0, 11.6, 6.6, 9.4),
+    "verandah": (0.8, 15.4, 7.0, 9.4),      # deep verandah across the main body
+    "outdoor": (22.8, 26.0, 25.0, 31.0),    # covered outdoor room with a stone fireplace
     "garage": (16.2, 22.6, 2.2, 9.6),      # street level, under the wing's forecourt
     "pool": (12.5, 22.5, 28.5, 32.0),
-    "stair": (5.8, 7.8, 1.0, 5.4),         # front steps from the gate up to the lawn
+    "stair": (1.6, 3.4, 1.0, 5.4),         # front steps from the gate (SW end) up to the lawn
     "pad_back": 36.0,                       # rear edge of the courtyard pad
 }
 WALL_TOP = 156.4   # low street wall (about 0.9 m above the footpath)
@@ -103,7 +104,7 @@ def cmd_ground():
     (OUT / "house_massing.json").write_text(json.dumps(data, separators=(",", ":")))
     print("pad area %.0f m2, footprint %.0f m2 (%.0f%%), cut %.2f, fill %.2f" % (
         pad.area, footprint, 100 * footprint / LOT.area, -cut.min(), cut.max()))
-    for k in ("main", "wing", "rear", "garage", "pool"):
+    for k in ("main", "wing", "rear", "garage", "pool", "outdoor"):
         assert LOT.contains(frame_poly(*DESIGN[k])), k
 
 
@@ -196,6 +197,7 @@ def cmd_plan():
     rect("wing", (245, 245, 240, 235), (40, 40, 40, 255), "2-storey\nwing")
     rect("rear", (245, 245, 240, 220), (40, 40, 40, 255), "Family\nliving")
     rect("pool", (60, 170, 215, 230), (20, 90, 140, 255), "Pool")
+    rect("outdoor", (170, 130, 90, 200), (90, 60, 30, 255), "Outdoor\nroom")
     c = px(17.5, 34.0)
     d.text(c, "North courtyard", fill="white", anchor="mm", font=F(22), stroke_width=3, stroke_fill="black")
     d.line([px(*to_frame(*p)) for p in LOT.exterior.coords], fill=(230, 40, 40, 255), width=5)

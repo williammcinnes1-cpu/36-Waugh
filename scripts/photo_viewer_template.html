@@ -39,6 +39,9 @@ button { font: 500 0.82rem var(--font-body); color: var(--ink); background: tran
 button:hover { border-color: rgba(245, 241, 234, 0.35); }
 button[aria-pressed="true"] { background: var(--ink); color: #15191d; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+select { font: 500 0.82rem var(--font-body); color: var(--ink); background: rgba(245, 241, 234, 0.08); border: 1px solid rgba(245, 241, 234, 0.3); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
+select option { color: #15191d; }
+select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .time { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 220px; }
 .time input { flex: 1; min-width: 120px; accent-color: var(--accent); }
 .time span { font-variant-numeric: tabular-nums; font-size: 0.8rem; color: var(--ink-dim); min-width: 92px; }
@@ -57,22 +60,20 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 <div id="stage">
   <div class="chip title">
     <h1>36 Waugh Street, Griffith</h1>
-    <p>Option B · modern farmhouse · Lot 624 DP821594 · indicative</p>
+    <p><span id="designName">Modern farmhouse</span> · Lot 624 DP821594 · indicative</p>
   </div>
   <div class="compass" aria-label="North"><svg viewBox="0 0 24 24" width="26" height="26" id="compass"><polygon points="12,2 16,17 12,14 8,17" fill="var(--lot)"/><text x="12" y="23.5" text-anchor="middle" font-size="6" fill="var(--ink)" font-family="sans-serif">N</text></svg></div>
   <details class="chip facts" id="facts">
     <summary>Site and design</summary>
-    <dl>
-      <dt>Lot area</dt><dd>≈1,093 m²</dd>
-      <dt>Zoning</dt><dd>R1 General Residential</dd>
-      <dt>House + garage footprint</dt><dd>__FOOT__ m² (__COVER__)</dd>
-      <dt>Floor level</dt><dd>__FFL__ m AHD</dd>
-      <dt>Earthworks</dt><dd>cut ≤__CUT__ m · fill ≤__FILL__ m</dd>
-      <dt>Bushfire prone</dt><dd>rear half (vegetation buffer)</dd>
-    </dl>
-    <p>Small windows to the street for privacy; living rooms and pool open to a north courtyard. Terrain from the NSW 5 m elevation grid; eucalypts placed from the aerial photo. Concept only: not checked against the Griffith DCP or bushfire construction rules.</p>
+    <dl id="factsList"></dl>
+    <p id="factsNote"></p>
+    <p>Terrain from the NSW 5 m elevation grid; eucalypts placed from the aerial photo. Concept only: not checked against the Griffith DCP or bushfire construction rules.</p>
   </details>
   <div class="chip dock">
+    <div class="group">
+      <label class="label" for="design">Design</label>
+      <select id="design"></select>
+    </div>
     <div class="group" role="group" aria-label="Camera views">
       <span class="label">View</span>
       <button type="button" data-view="street" aria-pressed="true">Front gate</button>
@@ -140,7 +141,7 @@ const LEAF = "data:image/png;base64,__LEAF__";
   sun.target.position.copy(centre);
   const north = new THREE.Vector3(DATA.north[0], 0, -DATA.north[1]).normalize();
   const east = new THREE.Vector3(DATA.east[0], 0, -DATA.east[1]).normalize();
-  const lamps = [], emissives = [];
+  let lamps = [], emissives = [];
   const smooth = (a, b, x) => { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); };
   function setTime(t) {
     // 0 = midday, 0.72 = golden hour, 1 = dusk with the garden lights on
@@ -184,19 +185,27 @@ const LEAF = "data:image/png;base64,__LEAF__";
   grassTex.encoding = THREE.LinearEncoding;
 
   // ---------- load the scene ----------
-  const LEAVES = new Set(["hedge", "hydrangea", "olive", "shrub", "tussock"]);
+  const LEAVES = new Set(["hedge", "hydrangea", "hydrangea_lime", "olive", "shrub", "tussock"]);
   const FLAT = new Set(["terrain", "grass", "asphalt", "kerb", "concrete", "lawn", "mulch", "aggregate"]);
   let terrainMesh = null;
   const loader = new THREE.GLTFLoader();
-  // the model ships base64-encoded in a .txt next to the page (the host does not serve .glb)
-  function loadModel(onLoad, onProgress, onError) {
-    fetch("farmhouse_scene.txt").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); onProgress({ loaded: 1, total: 2 }); return r.text(); })
-      .then(t => { const bin = atob(t.trim()), buf = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i); loader.parse(buf.buffer, "", onLoad, onError); })
-      .catch(onError);
+  // each design's model ships base64-encoded in a .txt next to the page (the host does not serve .glb)
+  const designs = {};
+  let current = null, treesBuilt = false;
+  function fetchDesign(id) {
+    const meta = DATA.designs.find(x => x.id === id);
+    return fetch(meta.file).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+      .then(t => new Promise((res, rej) => {
+        const bin = atob(t.trim()), buf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        loader.parse(buf.buffer, "", res, rej);
+      }))
+      .then(gltf => prepare(gltf, meta));
   }
-  loadModel(gltf => {
+  function prepare(gltf, meta) {
+    const d = { meta, root: gltf.scene, lamps: [], emissives: [], terrain: null };
     gltf.scene.traverse(o => {
-      if (o.isLight) { o.userData.base = o.name.startsWith("pool") ? 6 : o.name.startsWith("lantern") ? 5 : 3.5; o.distance = 9; o.decay = 2; o.castShadow = false; lamps.push(o); return; }
+      if (o.isLight) { o.userData.base = o.name.startsWith("pool_fire") ? 12 : o.name.startsWith("pool") ? 6 : o.name.startsWith("lantern") ? 5 : 3.5; o.distance = 9; o.decay = 2; o.castShadow = false; d.lamps.push(o); return; }
       if (!o.isMesh) return;
       const name = (o.material.name || "").replace(/\.\d+$/, "");
       o.castShadow = !FLAT.has(name) && name !== "water";
@@ -209,9 +218,9 @@ const LEAF = "data:image/png;base64,__LEAF__";
         o.material = new THREE.MeshPhysicalMaterial({ color: "#1d272b", metalness: 0.25, roughness: 0.02, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 1.7 });
       } else if (name === "water") {
         o.material = new THREE.MeshPhysicalMaterial({ color: "#2f9fc9", roughness: 0.03, metalness: 0.05, transparent: true, opacity: 0.88, envMapIntensity: 1.4, emissive: new THREE.Color("#0a5e86"), emissiveIntensity: 0.25 });
-        emissives.push(o.material);
-      } else if (name === "bulb") {
-        m.emissive = new THREE.Color(1.0, 0.72, 0.42); m.emissiveIntensity = 0.2; emissives.push(m);
+        d.emissives.push(o.material);
+      } else if (name === "bulb" || name === "fire") {
+        m.emissive = new THREE.Color(1.0, 0.72, 0.42); m.emissiveIntensity = 0.2; d.emissives.push(m);
       } else if (name === "lawn") { m.map = lawnTex; m.color.set("#ffffff"); m.roughness = 0.95;
       } else if (name === "asphalt") { m.map = asphaltTex; m.color.set("#ffffff");
       } else if (name === "concrete" || name === "kerb") { m.map = concreteTex; m.color.set("#ffffff");
@@ -219,7 +228,7 @@ const LEAF = "data:image/png;base64,__LEAF__";
       } else if (name === "roof_x" || name === "roof_y") { m.map = seamTex; m.color.set("#ffffff"); m.metalness = 0.55; m.roughness = 0.4;
         if (name === "roof_y") { m.map = seamTex.clone(); m.map.rotation = Math.PI / 2; m.map.needsUpdate = true; }
       } else if (name === "terrain" || name === "grass") {
-        terrainMesh = name === "terrain" ? o : terrainMesh;
+        if (name === "terrain") d.terrain = o;
         m.roughness = 1; m.metalness = 0;
         m.color = name === "terrain" ? new THREE.Color(1.05, 0.92, 0.7) : new THREE.Color("#a8874a");
         m.onBeforeCompile = sh => {
@@ -233,16 +242,34 @@ const LEAF = "data:image/png;base64,__LEAF__";
       } else if (m.map) { m.map.anisotropy = renderer.capabilities.getMaxAnisotropy(); }
       if (o.material.map) o.material.needsUpdate = true;
     });
-    scene.add(gltf.scene);
-    scene.updateMatrixWorld(true);
-    buildTrees();
-    buildOverlays();
-    setTime(+document.getElementById("tod").value);
-    setView((location.hash || "#street").slice(1));
-    document.getElementById("loading").hidden = true;
-    document.body.dataset.ready = "1";
-  }, ev => { if (ev.total) document.getElementById("pct").textContent = Math.round(ev.loaded / ev.total * 100) + "%"; },
-  err => { document.getElementById("loading").textContent = "The site model could not be loaded. Reload the page to try again."; console.error(err); });
+    return d;
+  }
+  function showDesign(id) {
+    const sel = document.getElementById("design");
+    sel.value = id; sel.disabled = true;
+    const load = document.getElementById("loading");
+    load.hidden = false; load.firstChild.textContent = "Loading the design… ";
+    const got = designs[id] ? Promise.resolve(designs[id]) : fetchDesign(id).then(d => (designs[id] = d));
+    got.then(d => {
+      if (current) scene.remove(current.root);
+      current = d; scene.add(d.root); scene.updateMatrixWorld(true);
+      terrainMesh = d.terrain; lamps = d.lamps; emissives = d.emissives;
+      if (!treesBuilt) { buildTrees(); treesBuilt = true; }
+      buildOverlays();
+      document.getElementById("designName").textContent = d.meta.name;
+      document.getElementById("factsList").innerHTML = d.meta.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+      document.getElementById("factsNote").textContent = d.meta.note;
+      setTime(+document.getElementById("tod").value);
+      if (!document.body.dataset.ready) setView((location.hash || "#street").slice(1));
+      load.hidden = true; sel.disabled = false;
+      document.body.dataset.ready = "1"; document.body.dataset.design = id;
+      requestRender();
+    }).catch(err => { load.textContent = "That design could not be loaded. Reload the page to try again."; sel.disabled = false; console.error(err); });
+  }
+  const sel = document.getElementById("design");
+  DATA.designs.forEach(x => { const o = document.createElement("option"); o.value = x.id; o.textContent = x.name; sel.appendChild(o); });
+  sel.addEventListener("change", () => showDesign(sel.value));
+  showDesign(DATA.designs[0].id);
 
   // ---------- ground height by ray cast ----------
   const ray = new THREE.Raycaster();
@@ -291,6 +318,7 @@ const LEAF = "data:image/png;base64,__LEAF__";
   // ---------- survey overlays draped on the ground ----------
   const overlays = {};
   function buildOverlays() {
+    Object.values(overlays).forEach(o => { scene.remove(o); o.traverse(c => c.geometry && c.geometry.dispose()); });
     const drape = (ring, color, radius) => {
       const g = new THREE.Group();
       const pts = [];
@@ -306,7 +334,9 @@ const LEAF = "data:image/png;base64,__LEAF__";
     };
     overlays.lot = drape(DATA.lot, "#ff4a3d", 0.16);
     overlays.fire = new THREE.Group(); DATA.bushfire.forEach(r => overlays.fire.add(drape(r, "#f39a3a", 0.13)));
-    Object.values(overlays).forEach(o => { o.visible = false; scene.add(o); });
+    overlays.lot.visible = document.getElementById("tLot").checked;
+    overlays.fire.visible = document.getElementById("tFire").checked;
+    Object.values(overlays).forEach(o => scene.add(o));
   }
   document.getElementById("tLot").addEventListener("change", e => { overlays.lot.visible = e.target.checked; requestRender(); });
   document.getElementById("tFire").addEventListener("change", e => { overlays.fire.visible = e.target.checked; requestRender(); });

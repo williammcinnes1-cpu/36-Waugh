@@ -887,6 +887,7 @@ def main():
     ap.add_argument("--sun-az", type=float, default=232.0)
     ap.add_argument("--exposure", type=float, default=0.45)
     ap.add_argument("--blend", default="")
+    ap.add_argument("--export-glb", default="")
     a = ap.parse_args()
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -936,6 +937,11 @@ def main():
     build_house()
     build_vegetation()
     flush()
+    if a.export_glb:
+        import farmhouse_cycles  # shares the GLB export used by the web viewer
+        farmhouse_cycles.export_glb(a.export_glb)
+        print("exported", a.export_glb)
+        return
     setup_world_and_camera(a.view, a.sun_el, a.sun_az, a.exposure)
 
     sc = bpy.context.scene

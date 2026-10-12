@@ -23,13 +23,14 @@ def main():
     a = hm["assumptions"]
     data = {
         "trees": json.loads((D3 / "farmhouse_trees.json").read_text()),
+        "designs": json.loads((D3 / "designs" / "designs.json").read_text()),
         "lot": [to_un(*p) for p in payload["lot"]],
         "bushfire": [[to_un(*p) for p in ring] for ring in payload["bushfire"]],
         "north": [uy, ux], "east": [ux, -uy],
         "views": {
-            "street": {"eye": [6.8, -12.0, 1.8], "at": [8.6, 14.0, 3.0], "fov": 52},
+            "street": {"eye": [5.6, -12.5, 1.8], "at": [8.0, 14.0, 3.0], "fov": 52},
             "street_wide": {"eye": [9.5, -26.0, 3.2], "at": [11.5, 16.0, 4.0], "fov": 42},
-            "courtyard": {"eye": [22.0, 41.0, 6.5], "at": [12.0, 24.0, 1.5], "fov": 52},
+            "courtyard": {"eye": [9.0, 44.0, 8.5], "at": [17.5, 27.0, 0.5], "fov": 56},
             "aerial": {"eye": [48.0, -24.0, 42.0], "at": [12.0, 20.0, 0.0], "fov": 45},
         },
     }
@@ -42,7 +43,6 @@ def main():
                 .replace("__CUT__", f"{a['max_cut']:.1f}")
                 .replace("__FILL__", f"{a['max_fill']:.1f}"))
     (ROOT / "site_3d.html").write_text(html)
-    (D3 / "farmhouse_scene.txt").write_text(base64.b64encode((D3 / "farmhouse_scene.glb").read_bytes()).decode())
     print("site_3d.html", round(len(html) / 1e6, 2), "MB; trees", len(data["trees"]))
 
 

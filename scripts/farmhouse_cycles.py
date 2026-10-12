@@ -25,9 +25,9 @@ from cycles_render import (ARC, GZ, PADZ, B, MATS, TEX, arc_n, box, card, cyl, d
 ROOT = Path(__file__).resolve().parent.parent
 D3 = ROOT / "data" / "3d"
 LAY = json.loads((D3 / "house_massing.json").read_text())
-L = LAY["layout"]
-FRONT = LAY["front"]
-PAD_OUTLINE = LAY["pad_outline"]
+L = LAY.get("layout", {})          # empty when another design's massing is current (export_glb still works)
+FRONT = LAY.get("front", {})
+PAD_OUTLINE = LAY.get("pad_outline", [])
 rng = random.Random(4)
 rr = rng.uniform
 
@@ -77,6 +77,11 @@ def textures():
             l = R.uniform(-12, 8)
             d.ellipse([x - 6, y - 6, x + 6, y + 6], fill=(int(244 + l), int(242 + l), int(230 + l), 255))
     im.save(TEX / "leaf_hydrangea.png")
+    # lime-green variant (Annabelle / Limelight blooms)
+    arr = np.array(im).astype(np.int16)
+    bloom = (arr[..., 0] > 200) & (arr[..., 3] > 0)
+    arr[bloom, 0] -= 34; arr[bloom, 2] -= 80
+    Image.fromarray(arr.clip(0, 255).astype(np.uint8), "RGBA").save(TEX / "leaf_hydrangea_lime.png")
 
 
 # ------------------------------------------------------------------ wall helpers with rectangular openings
@@ -142,6 +147,25 @@ def window_n(a, b, zb, zt, uf, ub, cols=2, rows=3, outward=1):
     glass_u = (uf + ub) / 2
     poly([(glass_u, a, zb), (glass_u, b, zb), (glass_u, b, zt), (glass_u, a, zt)], "glass")
     frame_rect(a, b, zb, zt, face + outward * 0.02, "n", cols, rows)
+
+
+def plinth_u(u0, u1, n_face, outward, z1=0.9, gaps=()):
+    """limestone base course on a wall facing -n (outward=-1) or +n (+1), skipping door/window gaps"""
+    n0, n1 = sorted((n_face, n_face + outward * 0.07))
+    cuts = sorted({u0, u1, *[x for g in gaps for x in g]})
+    for a, b in zip(cuts, cuts[1:]):
+        if not any(g[0] <= a and b <= g[1] for g in gaps):
+            box(a, b, n0, n1, -0.4, z1, "limestone")
+            box(a - 0.02, b + 0.02, min(n0, n1) - 0.03 * (outward < 0), max(n0, n1) + 0.03 * (outward > 0), z1, z1 + 0.06, "limestone")
+
+
+def plinth_n(n0_, n1_, u_face, outward, z1=0.9, gaps=()):
+    u0, u1 = sorted((u_face, u_face + outward * 0.07))
+    cuts = sorted({n0_, n1_, *[x for g in gaps for x in g]})
+    for a, b in zip(cuts, cuts[1:]):
+        if not any(g[0] <= a and b <= g[1] for g in gaps):
+            box(u0, u1, a, b, -0.4, z1, "limestone")
+            box(u0 - 0.03 * (outward < 0), u1 + 0.03 * (outward > 0), a - 0.02, b + 0.02, z1, z1 + 0.06, "limestone")
 
 
 def gable_u(u0, u1, nf, nb, ze, pitch, mat, opening=None):
@@ -245,7 +269,7 @@ def build_house():
     gable_n(mn0, mn1, mu0, mu0 + T, EAVE_MAIN, PITCH_MAIN, "clad")
     zr_main = roof_ridge_u(mu0, wu0 - 0.1, mn0, mn1, EAVE_MAIN, PITCH_MAIN)
     # dormers with small windows (privacy) on the street slope
-    for du in (3.3, 9.2):
+    for du in (3.4, 8.2, 12.9):
         n_f = mn0 + 1.6
         z_b = EAVE_MAIN + 1.6 * math.tan(PITCH_MAIN) - 0.3
         wall_u(du - 1.0, du + 1.0, n_f, n_f + 0.15, z_b, z_b + 1.9, [(du - 0.5, du + 0.5, z_b + 0.5, z_b + 1.5)], "clad")
@@ -262,24 +286,39 @@ def build_house():
     cr_pendant(10.0, mn0 + 1.9, 2.0)
     cr_pendant(3.3, mn0 + 2.4, 2.3)
 
-    # --- verandah: timber deck, posts with knee braces, metal skillion roof
-    box(vu0, vu1, vn0, mn0, -0.25, 0.12, "deck")
-    zr_v, zl_v = EAVE_MAIN - 0.15, 2.55
-    for x in (vu0 + 0.15, 4.0, 9.6, vu1 - 0.15):
-        box(x - 0.1, x + 0.1, vn0 + 0.1, vn0 + 0.3, 0.12, zl_v, "timber")
-        for s in (-1, 1):
-            if vu0 + 0.3 < x + s * 0.5 < vu1 - 0.3:
-                cyl((x, vn0 + 0.2, zl_v - 0.55), (x + s * 0.55, vn0 + 0.2, zl_v - 0.02), 0.04, 0.04, "timber")
-    box(vu0, vu1, vn0 + 0.1, vn0 + 0.3, zl_v, zl_v + 0.2, "timber")
-    slab((vu0 - 0.2, vn0 - 0.25, zl_v + 0.2), (vu1 + 0.2, vn0 - 0.25, zl_v + 0.2), (vu1 + 0.2, mn0, zr_v + 0.05), (vu0 - 0.2, mn0, zr_v + 0.05), 0.08, "roof_x")
-    box(vu0 - 0.2, vu1 + 0.2, vn0 - 0.31, vn0 - 0.19, zl_v + 0.05, zl_v + 0.22, "black")
-    light("POINT", (6.8, vn0 + 1.4, zl_v - 0.3), 20, WARM, size=0.1, name="verandah")
-    for x in (2.6, 4.1):  # outdoor chairs
-        box(x - 0.35, x + 0.35, vn0 + 1.0, vn0 + 1.7, 0.12, 0.55, "black")
-        box(x - 0.3, x + 0.3, vn0 + 1.05, vn0 + 1.65, 0.45, 0.6, "linen")
-    for x in (door[0] - 0.75, door[1] + 0.75):  # potted plants by the door
-        cyl((x, mn0 - 0.45, 0.12), (x, mn0 - 0.45, 0.6), 0.22, 0.26, "black")
-        bush((x, mn0 - 0.45, 1.0), 0.38, "hedge", 16)
+    # --- deep verandah: limestone-faced deck, chunky timber posts on stone piers, knee braces, metal roof
+    box(vu0, vu1, vn0, mn0, -0.4, 0.12, "limestone")
+    box(vu0 + 0.05, vu1 - 0.05, vn0 + 0.05, mn0, 0.12, 0.15, "deck")
+    zr_v, zl_v = EAVE_MAIN - 0.15, 2.65
+    posts = (vu0 + 0.25, 4.3, 5.55, 8.05, 9.3, 12.4, vu1 - 0.25)
+    for x in posts:
+        box(x - 0.3, x + 0.3, vn0 + 0.05, vn0 + 0.65, 0.12, 0.85, "limestone")
+        box(x - 0.33, x + 0.33, vn0 + 0.02, vn0 + 0.68, 0.85, 0.92, "limestone")
+        box(x - 0.15, x + 0.15, vn0 + 0.2, vn0 + 0.5, 0.92, zl_v, "timber")
+        for sgn in (-1, 1):
+            if vu0 + 0.4 < x + sgn * 0.6 < vu1 - 0.4:
+                cyl((x, vn0 + 0.35, zl_v - 0.6), (x + sgn * 0.6, vn0 + 0.35, zl_v - 0.02), 0.06, 0.06, "timber")
+    box(vu0, vu1, vn0 + 0.15, vn0 + 0.55, zl_v, zl_v + 0.3, "timber")
+    slab((vu0 - 0.25, vn0 - 0.3, zl_v + 0.3), (vu1 + 0.25, vn0 - 0.3, zl_v + 0.3), (vu1 + 0.25, mn0, zr_v + 0.05), (vu0 - 0.25, mn0, zr_v + 0.05), 0.08, "roof_x")
+    box(vu0 - 0.25, vu1 + 0.25, vn0 - 0.36, vn0 - 0.24, zl_v + 0.12, zl_v + 0.32, "black")
+    for x in (3.0, 6.8, 10.8, 14.0):
+        box(x - 0.1, x + 0.1, vn0 + 1.4, vn0 + 1.6, zl_v + 0.1, zl_v + 0.12, "bulb")
+        light("POINT", (x, vn0 + 1.5, zl_v - 0.1), 14, WARM, size=0.05, name="verandah")
+    # stone steps down to the lawn at the door
+    box(door[0] - 0.6, door[1] + 0.6, vn0 - 0.35, vn0 + 0.02, -0.3, 0.0, "limestone")
+    box(door[0] - 0.8, door[1] + 0.8, vn0 - 0.7, vn0 - 0.33, -0.3, -0.13, "limestone")
+    for x in (1.9, 3.1, 13.0, 14.2):  # verandah chairs
+        box(x - 0.35, x + 0.35, vn0 + 1.0, vn0 + 1.7, 0.15, 0.55, "black")
+        box(x - 0.3, x + 0.3, vn0 + 1.05, vn0 + 1.65, 0.45, 0.62, "linen")
+    for x in (door[0] - 0.75, door[1] + 0.75):  # potted ferns by the door
+        cyl((x, mn0 - 0.45, 0.15), (x, mn0 - 0.45, 0.65), 0.22, 0.27, "limestone")
+        bush((x, mn0 - 0.45, 1.05), 0.42, "hedge", 18)
+    # limestone base course on the street faces, the SW gable end and the wing
+    plinth_u(mu0, wu0, mn0, -1, gaps=[(door[0], door[1])])
+    plinth_n(mn0, mn1, mu0, -1)
+    plinth_u(wu0, wu1, wn0, -1)
+    plinth_n(wn0, wn1, wu1, 1)
+    plinth_n(rn0, rn1, ru0, -1)
 
     # --- two-storey gable wing, gable to the street: one window per floor with an awning on the lower one
     wl = (17.4, 21.2, 0.9, 2.5)
@@ -318,9 +357,15 @@ def build_house():
     box(2.4, 6.0, rn0 + 4.0, rn0 + 5.0, 0, 0.45, "fabric")
     cr_pendant(5.0, rn0 + 7.5, 2.0)
 
-    # --- chimney on the main roof
-    box(12.8, 13.9, mn0 + 6.5, mn0 + 7.6, 0, zr_main + 1.2, "whitebrick")
-    box(12.7, 14.0, mn0 + 6.4, mn0 + 7.7, zr_main + 1.2, zr_main + 1.32, "black")
+    # --- rough limestone chimney on the SW gable end, stepping in above the eave
+    nmid = (mn0 + mn1) / 2
+    box(mu0 - 0.75, mu0 + 0.05, nmid - 1.1, nmid + 1.1, -0.4, EAVE_MAIN + 0.4, "limestone")
+    faces("limestone", [(mu0 - 0.75, nmid - 1.1, EAVE_MAIN + 0.4), (mu0 + 0.05, nmid - 1.1, EAVE_MAIN + 0.4), (mu0 + 0.05, nmid + 1.1, EAVE_MAIN + 0.4), (mu0 - 0.75, nmid + 1.1, EAVE_MAIN + 0.4),
+                        (mu0 - 0.6, nmid - 0.65, EAVE_MAIN + 1.2), (mu0 + 0.05, nmid - 0.65, EAVE_MAIN + 1.2), (mu0 + 0.05, nmid + 0.65, EAVE_MAIN + 1.2), (mu0 - 0.6, nmid + 0.65, EAVE_MAIN + 1.2)],
+          [(0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)])
+    box(mu0 - 0.6, mu0 + 0.05, nmid - 0.65, nmid + 0.65, EAVE_MAIN + 1.2, zr_main + 1.1, "limestone")
+    box(mu0 - 0.68, mu0 + 0.13, nmid - 0.73, nmid + 0.73, zr_main + 1.1, zr_main + 1.22, "black")
+    box(mu0 - 0.4, mu0 - 0.1, nmid - 0.25, nmid + 0.25, zr_main + 1.22, zr_main + 1.5, "black")
 
     # --- garage (street level) in painted brick, timber-look door; lawn on its roof
     gu0, gu1, gn0, gn1 = L["garage"]
@@ -365,11 +410,19 @@ def build_house():
         box(s0, s1, n_a, sn1, z_lo - 0.4, z, "paving")
     for x0, x1 in ((s0 - 0.3, s0), (s1, s1 + 0.3)):
         box(x0, x1, 2.2, sn1, z_lo - 0.4, PADZ + 0.35, "whitebrick")
-    # stepping-stone path across the lawn to the verandah
-    n = sn1 + 0.2
-    while n < vn0 - 0.2:
-        box(s0 + 0.1, s1 - 0.1, n, n + 0.55, PADZ + 0.02, PADZ + 0.07, "paving")
-        n += 0.75
+    # curving flagstone path from the top of the steps to the verandah steps
+    p0, p1, p2, p3 = ((s0 + s1) / 2, sn1), ((s0 + s1) / 2, sn1 + 1.4), (door[0] - 1.6, vn0 - 2.2), ((door[0] + door[1]) / 2, vn0 - 0.7)
+    for k in range(13):
+        t = k / 12
+        cu = (1 - t) ** 3 * p0[0] + 3 * (1 - t) ** 2 * t * p1[0] + 3 * (1 - t) * t * t * p2[0] + t ** 3 * p3[0]
+        cn = (1 - t) ** 3 * p0[1] + 3 * (1 - t) ** 2 * t * p1[1] + 3 * (1 - t) * t * t * p2[1] + t ** 3 * p3[1]
+        for off in (-0.45, 0.35):
+            a_ = rng.uniform(0, 3.14)
+            w_, h_ = rr(0.35, 0.5), rr(0.25, 0.4)
+            c_, s_ = math.cos(a_), math.sin(a_)
+            x0, n0_ = cu + off * 0.9, cn + rr(-0.1, 0.1)
+            corners = [(x0 + c_ * dx - s_ * dn, n0_ + s_ * dx + c_ * dn, PADZ + 0.06) for dx, dn in ((-w_, -h_), (w_, -h_), (w_, h_), (-w_, h_))]
+            slab(*corners, -0.08, "flagstone")
     # planted bank from the low wall up to the lawn, then the front lawn
     bt = FRONT["bank_top"]
     drape(0.3, s0 - 0.3, lambda u: 2.2, lambda u: bt, 0.05, "mulch", 24, 6)
@@ -396,6 +449,29 @@ def build_house():
             box(x - 0.2, x + 0.2, nn - 0.2, nn + 0.2, PADZ, PADZ + 0.45, "black")
     box(0.4, ru0 - 0.1, rn1, cn1, PADZ - 0.3, PADZ + 0.03, "lawn")
     box(0.4, ru1, rn1, cn1, PADZ - 0.3, PADZ + 0.03, "lawn")
+
+    # --- covered outdoor room with a stone fireplace on the NE side of the courtyard
+    ou0, ou1, on0, on1 = L["outdoor"]
+    zo = PADZ + 0.15
+    box(ou0, ou1, on0, on1, PADZ - 0.3, zo, "flagstone")
+    for x, nn in ((ou0 + 0.2, on0 + 0.2), (ou0 + 0.2, on1 - 0.2), (ou1 - 0.2, on0 + 0.2), (ou1 - 0.2, on1 - 0.2)):
+        box(x - 0.15, x + 0.15, nn - 0.15, nn + 0.15, zo, zo + 2.8, "timber")
+    box(ou0, ou1, on0 + 0.05, on0 + 0.35, zo + 2.8, zo + 3.05, "timber")
+    box(ou0, ou1, on1 - 0.35, on1 - 0.05, zo + 2.8, zo + 3.05, "timber")
+    box(ou0 + 0.05, ou0 + 0.35, on0, on1, zo + 2.8, zo + 3.05, "timber")
+    roof_ridge_n(on0, on1, ou0, ou1, zo + 3.05, math.radians(35), o=0.35)
+    fn0, fn1 = on0 + 1.4, on1 - 1.4
+    box(ou1 - 0.6, ou1, fn0, fn1, zo, zo + 2.6, "limestone")
+    box(ou1 - 0.5, ou1, fn0 + 0.6, fn1 - 0.6, zo + 2.6, zo + 6.2, "limestone")
+    box(ou1 - 0.55, ou1 + 0.05, fn0 + 0.55, fn1 - 0.55, zo + 6.2, zo + 6.32, "black")
+    box(ou1 - 0.65, ou1 - 0.55, fn0 + 0.6, fn1 - 0.6, zo + 0.45, zo + 1.35, "black")
+    box(ou1 - 0.55, ou1 - 0.3, fn0 + 0.75, fn1 - 0.75, zo + 0.5, zo + 0.75, "fire")
+    light("POINT", (ou1 - 0.9, (fn0 + fn1) / 2, zo + 0.8), 120, (1.0, 0.45, 0.15), size=0.3, name="pool_fire")
+    box(ou1 - 1.0, ou1 - 0.6, fn0 - 0.2, fn1 + 0.2, zo, zo + 0.4, "limestone")  # hearth
+    box(ou0 + 0.5, ou0 + 1.4, on0 + 1.2, on1 - 1.2, zo, zo + 0.45, "linen")       # sofa facing the fire
+    box(ou0 + 0.5, ou0 + 0.8, on0 + 1.2, on1 - 1.2, zo + 0.45, zo + 0.85, "linen")
+    box(ou0 + 1.9, ou0 + 2.6, on0 + 2.4, on1 - 2.4, zo, zo + 0.4, "walnut")
+    cr_pendant((ou0 + ou1) / 2, (on0 + on1) / 2, zo + 2.4, 40)
 
     # --- retaining walls along the pad edge (cut at the rear, fill at the sides), stepping to the ground
     pts = PAD_OUTLINE
@@ -476,13 +552,13 @@ def build_garden():
     n = sn1 + 0.3
     while n < vn0 - 0.4:
         for x in (s0 - 0.55, s1 + 0.55):
-            bush((x + rr(-0.1, 0.1), n, PADZ + 0.35), rr(0.32, 0.42), "hydrangea", 16)
+            bush((x + rr(-0.1, 0.1), n, PADZ + 0.35), rr(0.32, 0.42), "hydrangea" if rng.random() < 0.6 else "hydrangea_lime", 16)
         for x in (s0 - 1.25, s1 + 1.25):
             bush((x, n + 0.3, PADZ + 0.35), 0.36, "hedge", 18)
         n += 0.8
     for x in np.arange(1.4, 11.2, 0.9):
         if not (s0 - 0.6 < x < s1 + 0.6):
-            bush((x, vn0 - 0.45, PADZ + 0.4), rr(0.35, 0.45), "hydrangea", 16)
+            bush((x, vn0 - 0.45, PADZ + 0.4), rr(0.38, 0.5), "hydrangea" if rng.random() < 0.55 else "hydrangea_lime", 18)
     for x in np.arange(0.9, 15.6, 0.8):
         for nn in (2.8, 3.8):
             if not (s0 - 0.8 < x < s1 + 0.8):
@@ -507,21 +583,23 @@ def build_garden():
             for zz in (0.8, 1.7, 2.5):
                 bush((u, nn, zg(u, nn) + zz), rr(0.75, 0.95), "hedge", 18)
     # courtyard: olives and planting
-    for u, nn in ((24.5, 26.0), (10.5, 34.5), (25.5, 34.0)):
+    for u, nn in ((15.5, 34.5), (10.5, 34.5), (25.0, 34.0)):
         tree((u, nn, PADZ), rr(3.4, 4.0), rr(1.6, 1.9), "olive", "darkbark", stems=3, cards_per=22, crown_flat=0.6)
 
 
 GLB_TEX = {"clad": ("cladding.png", 0.25), "whitebrick": ("whitebrick.png", 0.5), "paving": ("paving.png", 0.25),
-           "coping": ("paving.png", 0.25), "slats": ("slats.png", 0.25)}
+           "coping": ("paving.png", 0.25), "slats": ("slats.png", 0.25), "limestone": ("stone.png", 0.35),
+           "flagstone": ("stone.png", 0.6), "stone": ("stone.png", 0.25)}
 GLB_COL = {"roof_x": ("#2b2d30", 0.42, 0.55), "roof_y": ("#2b2d30", 0.42, 0.55), "black": ("#141516", 0.4, 0.3),
            "timber": ("#7a5636", 0.6, 0), "deck": ("#8a6644", 0.55, 0), "door": ("#6b4a2c", 0.45, 0),
            "lawn": ("#5f7d38", 0.95, 0), "mulch": ("#4f3f31", 1.0, 0), "concrete": ("#bbb5aa", 0.9, 0),
            "kerb": ("#b6b0a5", 0.9, 0), "asphalt": ("#38393b", 0.9, 0), "aggregate": ("#a39b8e", 0.9, 0),
            "pooltile": ("#8fd0e3", 0.3, 0), "water": ("#3fa9cf", 0.05, 0), "bark": ("#a09684", 0.85, 0),
-           "darkbark": ("#4d443b", 0.9, 0), "grass": ("#a8874a", 1.0, 0), "floor": ("#8a6646", 0.4, 0),
+           "darkbark": ("#4d443b", 0.9, 0), "grass": ("#a8874a", 1.0, 0), "fire": ("#ff7a2a", 0.5, 0), "floor": ("#8a6646", 0.4, 0),
            "slab": ("#e8e2d6", 0.7, 0), "glass": ("#0e1416", 0.05, 0.0), "bulb": ("#fff2d8", 0.5, 0)}
 INTERIOR = {"fabric", "linen", "walnut", "rug", "art", "lamp"}
-EXTERIOR_LIGHTS = ("lantern", "door_lantern", "garage_lamp", "verandah", "pool")
+EXTERIOR_LIGHTS = ("lantern", "door_lantern", "garage_lamp", "verandah", "pool", "wall_up", "olive_up", "garage_up",
+                   "sconce", "soffit", "cabana")  # pool_fire included
 
 
 def export_glb(path):
@@ -552,7 +630,7 @@ def export_glb(path):
         m.use_nodes = True
         bsdf = m.node_tree.nodes["Principled BSDF"]
         nt = m.node_tree
-        if name in GLB_TEX or name in ("euc", "olive", "shrub", "hedge", "hydrangea", "tussock") or name == "terrain":
+        if name in GLB_TEX or name in ("euc", "olive", "shrub", "hedge", "hydrangea", "hydrangea_lime", "tussock") or name == "terrain":
             tex = nt.nodes.new("ShaderNodeTexImage")
             file = GLB_TEX[name][0] if name in GLB_TEX else ("leaf_%s.png" % name if name != "terrain" else None)
             tex.image = bpy.data.images.load(str(TEX / file)) if file else bpy.data.images.load(str(D3 / "ortho_texture.jpg"))
@@ -565,11 +643,12 @@ def export_glb(path):
             bsdf.inputs["Base Color"].default_value = (*srgb(hexc), 1)
             bsdf.inputs["Roughness"].default_value = rough
             bsdf.inputs["Metallic"].default_value = metal
-            if name == "bulb":
+            if name in ("bulb", "fire"):
                 bsdf.inputs["Emission Color"].default_value = (1.0, 0.75, 0.45, 1)
                 bsdf.inputs["Emission Strength"].default_value = 4.0
         ob.data.materials[0] = m
-    (D3 / "farmhouse_trees.json").write_text(json.dumps([[round(x, 2) for x in t] for t in EUC]))
+    if EUC:  # the eucalypt list is shared by every design
+        (D3 / "farmhouse_trees.json").write_text(json.dumps([[round(x, 2) for x in t] for t in EUC]))
     bpy.ops.export_scene.gltf(filepath=str(path), export_format="GLB", export_lights=True, export_cameras=False,
                               export_yup=True, export_apply=True, export_image_format="JPEG", export_jpeg_quality=85)
 
@@ -577,8 +656,8 @@ def export_glb(path):
 def export_mesh(path):
     """house geometry (everything except terrain, street, plants, trees) as triangles with base colours"""
     skip = {"terrain", "backdrop", "asphalt", "kerb", "concrete", "aggregate", "mulch", "euc", "olive", "shrub",
-            "hedge", "hydrangea", "tussock", "bark", "darkbark", "glass", "bulb", "lamp"}
-    colours = {"clad": (238, 236, 230), "whitebrick": (236, 234, 228), "roof_x": (45, 47, 50), "roof_y": (45, 47, 50),
+            "hedge", "hydrangea", "hydrangea_lime", "tussock", "bark", "darkbark", "glass", "bulb", "lamp", "fire"}
+    colours = {"clad": (238, 236, 230), "limestone": (214, 202, 178), "flagstone": (190, 182, 168), "whitebrick": (236, 234, 228), "roof_x": (45, 47, 50), "roof_y": (45, 47, 50),
                "black": (25, 25, 26), "timber": (122, 90, 62), "deck": (130, 98, 70), "door": (110, 78, 50),
                "paving": (212, 205, 190), "coping": (225, 220, 208), "lawn": (95, 122, 58), "water": (64, 172, 212),
                "pooltile": (143, 208, 227), "slats": (70, 52, 38), "floor": (138, 102, 70), "slab": (232, 226, 214)}
@@ -598,9 +677,9 @@ def export_mesh(path):
 
 
 VIEWS = {
-    "street": dict(eye=(6.8, -12.0, 1.8), at=(8.6, 14.0, 3.0), lens=26),
+    "street": dict(eye=(5.6, -12.5, 1.8), at=(8.0, 14.0, 3.0), lens=26),
     "street_wide": dict(eye=(9.5, -26.0, 3.2), at=(11.5, 16.0, 4.0), lens=30),
-    "courtyard": dict(eye=(22.0, 41.0, 6.5), at=(12.0, 24.0, 1.5), lens=28),
+    "courtyard": dict(eye=(9.0, 44.0, 8.5), at=(17.5, 27.0, 0.5), lens=26),
     "aerial": dict(eye=(48.0, -24.0, 42.0), at=(12.0, 20.0, 0.0), lens=30),
 }
 
@@ -648,7 +727,10 @@ def main():
         "bark": noisy_mat("bark", "#8a8070", "#b0a796", 6, 0.85, 0.2),
         "darkbark": flat_mat("darkbark", srgb("#4d443b"), 0.9),
         "euc": leaf_mat("euc"), "olive": leaf_mat("olive"), "shrub": leaf_mat("shrub"), "hedge": leaf_mat("hedge"),
-        "hydrangea": leaf_mat("hydrangea"),
+        "hydrangea": leaf_mat("hydrangea"), "hydrangea_lime": leaf_mat("hydrangea_lime"),
+        "limestone": img_mat("limestone", "stone.png", 0.35, 0.92, bump=0.7, tint=(1.07, 1.05, 1.0)),
+        "flagstone": img_mat("flagstone", "stone.png", 0.6, 0.85, bump=0.4, tint=(0.95, 0.95, 0.95)),
+        "fire": flat_mat("fire", (1, 0.4, 0.1), 0.5, emit=(1.0, 0.42, 0.12), strength=40),
         "terrain": terrain_mat("terrain", True), "grass": terrain_mat("grass", False),
     })
     w = MATS["water"] = bpy.data.materials.new("water")
