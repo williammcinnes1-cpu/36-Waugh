@@ -114,3 +114,9 @@ This is the shared brief for every house concept. Each designer gets a separate 
 - **Final renders:** use about 96 samples. 32 left the trees and stone blotchy.
 - **Roofs:** charcoal about #3a3d40, roughness about 0.45, not pure black. Exposure about 1.0–1.05.
 - **Garage in frame:** keep the garage in the street view; aim the camera so the NE end isn't cut off.
+
+## Roof rule (the client flagged this; it must never happen)
+- **One clean roof per part of the house.** Never stack two roof planes over the same area, and never let a lower roof slide under or through another roof.
+  - Example of the fault: the old farmhouse had a lean-to roof and a verandah roof sitting one above the other at the front, showing as two parallel roof lines.
+- **Where roofs meet,** use a proper valley or a junction against a wall with flashing. Don't let them intersect at random.
+- **Check before finishing:** look at the aerial view and at a close-up from a front corner. Verify every roof edge is a single, deliberate line, with no doubled fascias, overlapping eaves or roofs poking through walls.
