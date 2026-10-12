@@ -175,13 +175,29 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     q.note(17.5, 30.25, f"pool (deck RL {DECK:.2f})", 12, (60, 90, 120))
     rooms = [("Bed 3", 1, 4.6, 11.5, 16.0), ("Bed 4", 4.6, 8.0, 11.5, 16.0), ("Bed 2", 10.0, 13.2, 11.5, 16.0),
              ("Master bed\n(views E + street)", 15.6, 22.8, 11.5, 15.0), ("Hall", 1, 15.6, 16.0, 17.5),
-             ("Bar /\nkitchenette", 1, 5.5, 17.5, 21.4), ("Pool house", 1, 9, 21.4, 32.3)]
+             ("Bar /\nkitchenette", 1, 5.5, 17.5, 21.4), ("Pool house  8.0 × 10.9 m", 1, 9, 21.4, 32.3, ROOM, True, 12, (5.0, 27.2))]
     for r in rooms:
         q.room(*r)
     for name, *r in (("Bath", 13.2, 15.6, 11.5, 16.0), ("WIR", 15.6, 19.2, 15.0, 17.5),
                      ("Ensuite", 19.2, 22.8, 15.0, 17.5), ("Shower\n/ WC", 5.5, 9.0, 17.5, 21.4)):
         q.room(name, *r, fill=WET, size=11)
     q.stair(8.0, 10.0, 11.5, 14.0, "n", "DN")
+    # pool house furniture at true size: 10-seat timber table, couch facing a TV on the west wall
+    TIM, FAB, LN = (196, 160, 115), (175, 180, 190), (70, 70, 70)
+    q.rect(3.4, 6.6, 28.9, 30.0, TIM, LN, 2)                                     # table 3.2 × 1.1 m
+    for k in range(4):
+        u = 3.75 + k * 0.83
+        q.rect(u - 0.23, u + 0.23, 28.25, 28.7, (230, 225, 215), LN, 1)
+        q.rect(u - 0.23, u + 0.23, 30.2, 30.65, (230, 225, 215), LN, 1)
+    for u in (2.75, 6.8):
+        q.rect(u, u + 0.45, 29.22, 29.68, (230, 225, 215), LN, 1)
+    q.note(5.0, 31.3, "10-seat table 3.2 × 1.1 m", 10, (90, 70, 40))
+    q.rect(4.9, 5.85, 22.4, 25.2, FAB, LN, 2)                                    # 3-seat couch 2.8 m
+    q.rect(5.55, 5.85, 22.4, 25.2, (150, 155, 165), LN, 1)                       # back
+    q.rect(2.6, 3.5, 23.2, 24.4, TIM, LN, 1)                                     # coffee table
+    q.rect(1.0, 1.3, 23.0, 24.6, (30, 30, 30), None)                            # 75" TV on the west wall
+    q.note(2.0, 25.6, "TV", 10)
+    q.note(5.4, 26.2, "couch 2.8 m", 10)
     q.rect(8.0, 10.0, 14.0, 16.0, ROOM, (40, 40, 40), 3)
     for r in ((1, 22.8, 11.5, 17.5), (1, 9, 17.5, 32.3)):
         q.envelope(*r)
