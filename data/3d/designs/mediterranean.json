@@ -1,0 +1,44 @@
+{
+ "id": "mediterranean",
+ "name": "Modern Mediterranean (rough concept)",
+ "file": "designs/mediterranean.txt",
+ "note": "Rough concept: white rendered cubic volumes with flat parapet roofs, one arched entry, an upper-floor box with roof terraces to the street and east, and a north loggia over the pool. Uses the farmhouse's site fit.",
+ "facts": [
+  [
+   "Lot area",
+   "≈1,093 m²"
+  ],
+  [
+   "Zoning",
+   "R1 General Residential"
+  ],
+  [
+   "House + garage footprint",
+   "418 m² (38%)"
+  ],
+  [
+   "Floor level",
+   "157.6 m AHD"
+  ],
+  [
+   "Earthworks depth",
+   "cut ≤2.8 m · fill ≤1.9 m"
+  ],
+  [
+   "Cut / fill volume",
+   "≈598 / 291 m³"
+  ],
+  [
+   "Net soil",
+   "≈307 m³ to remove"
+  ],
+  [
+   "Pool excavation",
+   "≈60 m³ extra"
+  ],
+  [
+   "Bushfire prone",
+   "rear half (vegetation buffer)"
+  ]
+ ]
+}
