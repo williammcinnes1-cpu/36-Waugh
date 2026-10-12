@@ -40,7 +40,7 @@ rr = rng.uniform
 UF, UE, PITCH_UP = 3.0, 4.72, math.radians(36)  # view storey: floor, eave, pitch (ridge ≤ 9 m above natural ground, DCP 4.5a)
 EAVE_REAR, PITCH_REAR = 2.7, math.radians(19)   # long west wing: its ridge stays below the rear lean-to's top
 NF, FE, PF = 6.7, 2.65, math.radians(12)        # front lean-to: front edge n, underside height there, pitch
-ZH, PL = 4.2, math.radians(14)                  # rear lean-to: underside height at the view-storey wall, pitch
+ZH, PL = 3.85, math.radians(14)                 # rear lean-to: underside height at the view-storey wall, pitch
 ROOF = {}
 RP = 1.8   # raised rear level (pool deck, west wing floor) above the courtyard
 T = 0.25   # wall thickness
@@ -518,7 +518,7 @@ def rear_wing_roof(u0, u1, ns, n1, ze, pitch, zh, tl, o=0.45):
     tp = math.tan(pitch)
     um = (u0 + u1) / 2
     dz = o * tp
-    n_e = ns + (zh - (ze - dz)) / tl          # lean-to eave line over the covered terrace (unchanged)
+    n_e = L["wing"][3] + o                     # lean-to stops at a 0.45 m eave past the garage wing: sun into the ground floor
     ze = ze + RP                              # the wing sits a level up: its own gable roof, south gable above the lean-to
     zr = ze + (u1 - u0) / 2 * tp
     n_s = L["rear"][2]
@@ -859,7 +859,10 @@ def build_house():
     # north face: band above the rear lean-to, and the courtyard gable dormer
     xs = [uu0] + [x for c0, c1, _ in REAR_X for x in (c0, c1)] + [uu1]
     for a, b in zip(xs[::2], xs[1::2]):
-        wall_u(a, b, un1 - T, un1, UF, ue, [], "clad")
+        hw = [(x, x + 1.6, zb_(un1) + 0.12, ue - 0.12) for x in [a + 0.8 + 2.4 * k for k in range(int((b - a - 1.6) // 2.4) + 1)] if x + 1.6 < b - 0.6]
+        wall_u(a, b, un1 - T, un1, UF, ue, hw, "clad")
+        for w in hw:
+            window_u(*w, un1 - T, un1, cols=2, rows=1, outward=1)
     for c0, c1, cn in REAR_X:
         cm = (c0 + c1) / 2
         op = (cm - 0.9, cm + 0.9, zb_(cn) + 0.35, ue + 0.7)
@@ -902,13 +905,6 @@ def build_house():
     eave_trim(ru1 + o, wu1 + o, n_e, zb_(n_e), 1)
     for u in (ue_, wu1 + o):
         slab((u, un1, zb_(un1) - 0.12), (u, n_e, zb_(n_e) - 0.12), (u, n_e, zb_(n_e) + 0.13), (u, un1, zb_(un1) + 0.13), 0.05, "black")
-    # slender black steel posts and a beam under the covered terrace edge
-    for x in (ru1 + 0.3, 12.3, 15.6, 19.2, wu1 - 0.15):
-        box(x - 0.06, x + 0.06, n_e - 0.42, n_e - 0.3, 0.0, zb_(n_e - 0.3), "black")
-    box(ru1 + 0.2, wu1, n_e - 0.44, n_e - 0.28, zb_(n_e - 0.28) - 0.22, zb_(n_e - 0.28), "black")
-    for x in (13.9, 17.4):
-        cr_pendant(x, (mn1 + n_e) / 2, 2.25, 30, top=zb_((mn1 + n_e) / 2))
-
     # rear (north) wall onto the covered terrace: full-height glazing between the west wing and the garage wing
     big = (ru1 + 0.3, wu0 - 0.3, 0.0, 2.7)
     wall_u(ru1, mu1, mn1 - T, mn1, 0, zb_(mn1), [big], "clad")
@@ -967,7 +963,7 @@ def build_house():
     #     the view storey runs over it, rear lean-to behind; NE side wall stepped in 0.3 m at n = 17.5 (DCP 4.4c)
     wall_u(20.2, wu1, wn0, wn0 + T, 0, zf(wn0), [(20.7, 21.9, 1.2, 2.3)], "clad")
     window_u(20.7, 21.9, 1.2, 2.3, wn0, wn0 + T, cols=1, rows=2)
-    rl = (16.6, 22.0, 0.0, 2.7)
+    rl = (16.6, 22.0, 0.0, 2.4)
     wall_u(wu0, wu1 - 0.3, wn1 - T, wn1, 0, zb_(wn1), [rl], "clad")
     window_u(*rl, wn1 - T, wn1, cols=3, rows=1, outward=1)
     wall_n(wn0, un0, wu1 - T, wu1, 0, zf(wn0), [], "clad")
@@ -1084,9 +1080,12 @@ def build_house():
             (pu0, pu1, dn0, pn0), (pu0, pu1, pn1, cn1)]   # around the pool shell
     for a_, c_, n0_, n1_ in deck:                                                    # stone retaining body
         box(a_, c_, n0_, n1_, PADZ - 0.3, ZD - 0.06, "limestone")
-    for a_, c_, n0_, n1_ in ((ru1, ru1 + 1.6, rn0 + 1.8, dn0), (ru1, pu0 - 0.3, dn0, cn1), (pu1 + 0.3, 26.0, dn0, cn1),
-                             (pu0 - 0.3, pu1 + 0.3, dn0, pn0 - 0.3), (pu0 - 0.3, pu1 + 0.3, pn1 + 0.3, cn1), (22.8, 26.0, 25.0, dn0)):
-        box(a_, c_, n0_, n1_, ZD - 0.08, ZD + 0.03, "paving")
+    for a_, c_, n0_, n1_ in deck:                                                    # lawn over most of the deck
+        box(a_, c_, n0_, n1_, ZD - 0.08, ZD + 0.02, "lawn")
+    for a_, c_, n0_, n1_ in ((pu0 - 1.5, pu0 - 0.3, dn0, pn1 + 1.2), (pu1 + 0.3, pu1 + 1.0, dn0, pn1 + 1.2),
+                             (pu0 - 0.3, pu1 + 0.3, dn0, pn0 - 0.3), (pu0 - 0.3, pu1 + 0.3, pn1 + 0.3, pn1 + 1.2),
+                             (ru1, ru1 + 2.5, rn0 + 1.8, rn1 + 0.5), (ru1 + 2.5, pu0 - 1.5, dn0, dn0 + 1.5)):
+        box(a_, c_, n0_, n1_, ZD - 0.08, ZD + 0.04, "paving")                         # paving only around the pool and pool house
     box(ru1 + 1.6, 26.0, dn0 - 0.04, dn0 + 0.3, ZD - 0.06, ZD + 0.05, "coping")          # coping on the front wall
     box(ru1 + 1.3, ru1 + 1.64, rn0 + 1.8, dn0, ZD - 0.06, ZD + 0.05, "coping")
     su0, su1, nst = 14.4, 17.6, 9                                                    # broad stone steps up to the pool
