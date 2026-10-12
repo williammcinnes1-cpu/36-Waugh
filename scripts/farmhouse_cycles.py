@@ -31,8 +31,8 @@ PAD_OUTLINE = LAY.get("pad_outline", [])
 rng = random.Random(4)
 rr = rng.uniform
 
-EAVE_MAIN, PITCH_MAIN = 3.0, math.radians(40)
-EAVE_WING, PITCH_WING = 5.6, math.radians(45)
+EAVE_MAIN, PITCH_MAIN = 3.0, math.radians(37)   # ridge ≤ 9 m above natural ground (DCP 4.5a)
+EAVE_WING, PITCH_WING = 3.0, math.radians(45)   # wing is single storey + attic over the garage
 EAVE_REAR, PITCH_REAR = 3.0, math.radians(35)
 UPW = 3.2  # wing upper floor level
 T = 0.25   # wall thickness
@@ -250,35 +250,88 @@ def build_house():
     # --- main body: street wall with a front door and two windows behind the verandah, small attic dormers
     door = (5.95, 7.65, 0.0, 2.4)
     w1, w2 = (2.1, 4.5, 0.75, 2.4), (8.8, 11.2, 0.75, 2.4)
-    wall_u(mu0, mu1, mn0, mn0 + T, 0, EAVE_MAIN, [door, w1, w2], "clad")
+    # street wall in three planes so no run exceeds 5 m: entry bay forward 0.6 m, NE section set back 0.4 m
+    eb0, eb1, ebn = 5.0, 8.6, mn0 - 0.6
+    rec0, recn = 12.0, mn0 + 0.4
+    wall_u(mu0, eb0, mn0, mn0 + T, 0, EAVE_MAIN, [w1], "clad")
+    wall_u(eb0, eb1, ebn, ebn + T, 0, EAVE_MAIN, [door], "clad")
+    wall_n(ebn, mn0 + T, eb0 - T, eb0, 0, EAVE_MAIN, [], "clad")
+    wall_n(ebn, mn0 + T, eb1, eb1 + T, 0, EAVE_MAIN, [], "clad")
+    wall_u(eb1, rec0, mn0, mn0 + T, 0, EAVE_MAIN, [w2], "clad")
+    wall_u(rec0, wu0, recn, recn + T, 0, EAVE_MAIN, [(12.8, 14.6, 1.0, 2.3)], "clad")
+    wall_n(mn0, recn + T, rec0 - T, rec0, 0, EAVE_MAIN, [], "clad")
     window_u(*w1, mn0, mn0 + T, cols=3, rows=2)
     window_u(*w2, mn0, mn0 + T, cols=3, rows=2)
-    box(door[0], door[1], mn0 + 0.08, mn0 + 0.13, 0, 2.4, "door")
-    poly([(door[0] + 0.45, mn0 + 0.06, 1.0), (door[1] - 0.45, mn0 + 0.06, 1.0), (door[1] - 0.45, mn0 + 0.06, 2.1), (door[0] + 0.45, mn0 + 0.06, 2.1)], "glass")
+    window_u(12.8, 14.6, 1.0, 2.3, recn, recn + T, cols=2, rows=2)
+    box(door[0], door[1], ebn + 0.08, ebn + 0.13, 0, 2.4, "door")
+    poly([(door[0] + 0.45, ebn + 0.06, 1.0), (door[1] - 0.45, ebn + 0.06, 1.0), (door[1] - 0.45, ebn + 0.06, 2.1), (door[0] + 0.45, ebn + 0.06, 2.1)], "glass")
     for x in (door[0] - 0.35, door[1] + 0.35):  # wall lanterns either side of the door
-        box(x - 0.09, x + 0.09, mn0 - 0.14, mn0, 1.75, 2.2, "black")
-        box(x - 0.06, x + 0.06, mn0 - 0.13, mn0 - 0.02, 1.8, 2.12, "bulb")
-        light("POINT", (x, mn0 - 0.25, 1.95), 18, WARM, size=0.05, name="door_lantern")
+        box(x - 0.09, x + 0.09, ebn - 0.14, ebn, 1.75, 2.2, "black")
+        box(x - 0.06, x + 0.06, ebn - 0.13, ebn - 0.02, 1.8, 2.12, "bulb")
+        light("POINT", (x, ebn - 0.25, 1.95), 18, WARM, size=0.05, name="door_lantern")
     # rear (north) wall onto the courtyard: full-height glazing between the rear wing and the gable wing
     big = (ru1 + 0.3, wu0 - 0.3, 0.0, 2.7)
     wall_u(mu0, mu1, mn1 - T, mn1, 0, EAVE_MAIN, [big], "clad")
     window_u(*big, mn1 - T, mn1, cols=4, rows=1, outward=1)
     wall_n(mn0, mn1, mu0, mu0 + T, 0, EAVE_MAIN, [], "clad")
-    gable_u(mu0, mu1, mn0, mn0, EAVE_MAIN, 0, "clad") if False else None
-    # gable end at the SW side (wall in the n-z plane) and roof
-    gable_n(mn0, mn1, mu0, mu0 + T, EAVE_MAIN, PITCH_MAIN, "clad")
-    zr_main = roof_ridge_u(mu0, wu0 - 0.1, mn0, mn1, EAVE_MAIN, PITCH_MAIN)
-    # dormers with small windows (privacy) on the street slope
-    for du in (3.4, 8.2, 12.9):
-        n_f = mn0 + 1.6
-        z_b = EAVE_MAIN + 1.6 * math.tan(PITCH_MAIN) - 0.3
-        wall_u(du - 1.0, du + 1.0, n_f, n_f + 0.15, z_b, z_b + 1.9, [(du - 0.5, du + 0.5, z_b + 0.5, z_b + 1.5)], "clad")
-        window_u(du - 0.5, du + 0.5, z_b + 0.5, z_b + 1.5, n_f, n_f + 0.15, cols=2, rows=2)
-        box(du - 1.0, du - 0.88, n_f, n_f + 2.6, z_b, z_b + 1.9, "clad")
-        box(du + 0.88, du + 1.0, n_f, n_f + 2.6, z_b, z_b + 1.9, "clad")
-        gable_u(du - 1.0, du + 1.0, n_f, n_f + 0.15, z_b + 1.9, math.radians(45), "clad")
-        roof_ridge_n(n_f, n_f + 2.6, du - 1.0, du + 1.0, z_b + 1.9, math.radians(45), o=0.2)
-        light("POINT", (du, n_f + 1.2, z_b + 1.3), 40, WARM, size=0.1, name="attic")
+    # --- the view storey: an upper floor across the middle of the house (where natural ground is higher,
+    #     keeping the ridge under 9 m), looking over low lean-to roofs to the street (SSE) and east
+    uu0, uu1, un0, un1 = L["upper"]
+    UF, UW = EAVE_MAIN, 2.5
+    ue = UF + UW
+    pitch_up = math.radians(26)  # keeps the NE end of the ridge under 9 m above natural ground
+    box(uu0, uu1, un0, un1, UF - 0.05, UF + 0.2, "slab")
+    # street face in three bays (centre bay projects 0.5 m with a Juliet balcony) so no run exceeds 5 m
+    jb0, jb1, jn = 6.0, 10.6, un0 - 0.5
+    wall_u(uu0, jb0, un0, un0 + T, UF, ue, [(1.9, 4.7, UF + 0.6, UF + 2.3)], "clad")
+    window_u(1.9, 4.7, UF + 0.6, UF + 2.3, un0, un0 + T, cols=3, rows=2)
+    wall_u(jb0, jb1, jn, jn + T, UF, ue, [(6.6, 10.0, UF + 0.05, UF + 2.35)], "clad")
+    window_u(6.6, 10.0, UF + 0.05, UF + 2.35, jn, jn + T, cols=4, rows=2)
+    box(6.5, 10.1, jn - 0.35, jn, UF + 0.05, UF + 0.13, "black")
+    for k in range(13):
+        x = 6.55 + k * 0.29
+        box(x - 0.015, x + 0.015, jn - 0.33, jn - 0.3, UF + 0.13, UF + 1.05, "black")
+    box(6.5, 10.1, jn - 0.36, jn - 0.28, UF + 1.05, UF + 1.1, "black")
+    wall_n(jn, un0 + T, jb0 - T, jb0, UF, ue, [], "clad")
+    wall_n(jn, un0 + T, jb1, jb1 + T, UF, ue, [], "clad")
+    gable_u(jb0, jb1, jn, jn + T, ue, math.radians(40), "clad")
+    roof_ridge_n(jn, un0 + 1.2, jb0, jb1, ue, math.radians(40), o=0.25)
+    wall_u(jb1, wu0, un0, un0 + T, UF, ue, [(11.4, 14.6, UF + 0.6, UF + 2.3)], "clad")
+    window_u(11.4, 14.6, UF + 0.6, UF + 2.3, un0, un0 + T, cols=3, rows=2)
+    wall_u(wu0, 19.0, un0, un0 + T, UF, ue, [], "clad")
+    wall_u(19.0, uu1, un0 + 0.3, un0 + 0.3 + T, UF, ue, [], "clad")
+    # east gable: full glazing for the view east, with a fixed slatted privacy screen over the lower part
+    wall_n(un0, un1, uu1 - T, uu1, UF, ue, [(un0 + 0.9, un1 - 0.9, UF + 0.05, ue - 0.05)], "clad")
+    window_n(un0 + 0.9, un1 - 0.9, UF + 0.05, ue - 0.05, uu1 - T, uu1, cols=4, rows=1, outward=1)
+    zr_up_e = ue + (un1 - un0) / 2 * math.tan(pitch_up)
+    nm_up = (un0 + un1) / 2
+    faces("clad", [(uu1 - T, un0, ue), (uu1 - T, un1, ue), (uu1 - T, nm_up, zr_up_e), (uu1, un0, ue), (uu1, un1, ue), (uu1, nm_up, zr_up_e)],
+          [(0, 1, 2), (3, 5, 4), (0, 3, 4, 1), (1, 4, 5, 2), (2, 5, 3, 0)])
+    for k in range(9):
+        z = UF + 0.15 + k * 0.1
+        box(uu1 + 0.05, uu1 + 0.1, un0 + 0.9, un1 - 0.9, z, z + 0.05, "black")
+    # SW end and north face: modest windows (privacy to the SW neighbour, bedrooms to the north)
+    wall_n(un0, un1, uu0, uu0 + T, UF, ue, [(nm_up - 0.6, nm_up + 0.6, UF + 1.0, UF + 2.2)], "clad")
+    window_n(nm_up - 0.6, nm_up + 0.6, UF + 1.0, UF + 2.2, uu0, uu0 + T, cols=1, rows=2, outward=-1)
+    gable_n(un0, un1, uu0, uu0 + T, ue, pitch_up, "clad")
+    north_w = [(3.0, 5.4, UF + 0.9, UF + 2.3), (9.6, 12.0, UF + 0.9, UF + 2.3), (17.0, 19.4, UF + 0.9, UF + 2.3)]
+    wall_u(uu0, uu1, un1 - T, un1, UF, ue, north_w, "clad")
+    for w_ in north_w:
+        window_u(*w_, un1 - T, un1, cols=2, rows=2, outward=1)
+    zr_main = roof_ridge_u(uu0, uu1, un0, un1, ue, pitch_up, o=0.45)
+    room_light(uu0 + 0.5, uu1 - 0.5, un0 + 0.5, un1 - 0.5, ue - 0.05, 1600)
+    # low lean-to roofs over the ground floor in front of and behind the view storey (clear sightlines)
+    lean = math.radians(22)
+    z_hi = EAVE_MAIN + (un0 - mn0 + 0.45) * math.tan(lean)
+    slab((mu0 - 0.45, mn0 - 0.45, EAVE_MAIN - 0.05), (wu0, mn0 - 0.45, EAVE_MAIN - 0.05), (wu0, un0, z_hi), (mu0 - 0.45, un0, z_hi), 0.1, "roof_x")
+    z_hi_r = EAVE_MAIN + (mn1 - un1 + 0.45) * math.tan(lean)
+    slab((mu0 - 0.45, un1, z_hi_r), (wu1 + 0.3, un1, z_hi_r), (wu1 + 0.3, mn1 + 0.45, EAVE_MAIN - 0.05), (mu0 - 0.45, mn1 + 0.45, EAVE_MAIN - 0.05), 0.1, "roof_x")
+    z_hi_w = EAVE_MAIN + (wn1 - un1 + 0.45) * math.tan(lean)
+    slab((wu0, un1, z_hi_w), (wu1 + 0.45, un1, z_hi_w), (wu1 + 0.45, wn1 + 0.45, EAVE_MAIN - 0.05), (wu0, wn1 + 0.45, EAVE_MAIN - 0.05), 0.1, "roof_x")
+    for x0, x1, n0_, n1_ in ((mu0 - 0.45, wu0, mn0 - 0.45, mn0 - 0.45), (mu0 - 0.45, wu1 + 0.45, mn1 + 0.45, mn1 + 0.45)):
+        box(x0, x1, n0_ - 0.06, n0_ + 0.06, EAVE_MAIN - 0.2, EAVE_MAIN - 0.02, "black")
+    # SW end wall of the ground floor (single storey now)
+    wall_n(mn0, mn1, mu0, mu0 + T, EAVE_MAIN, EAVE_MAIN + 0.6, [], "clad")
     room_light(mu0 + 0.5, wu0 - 0.5, mn0 + 0.5, mn1 - 0.5, EAVE_MAIN, 1200)
     # simple furniture glimpsed through the front windows
     box(2.3, 4.3, mn0 + 1.0, mn0 + 1.9, 0, 0.45, "fabric")
@@ -314,30 +367,41 @@ def build_house():
         cyl((x, mn0 - 0.45, 0.15), (x, mn0 - 0.45, 0.65), 0.22, 0.27, "limestone")
         bush((x, mn0 - 0.45, 1.05), 0.42, "hedge", 18)
     # limestone base course on the street faces, the SW gable end and the wing
-    plinth_u(mu0, wu0, mn0, -1, gaps=[(door[0], door[1])])
+    plinth_u(mu0, eb0, mn0, -1)
+    plinth_u(eb0, eb1, ebn, -1, gaps=[(door[0], door[1])])
+    plinth_u(eb1, rec0, mn0, -1)
+    plinth_u(rec0, wu0, recn, -1)
     plinth_n(mn0, mn1, mu0, -1)
     plinth_u(wu0, wu1, wn0, -1)
-    plinth_n(wn0, wn1, wu1, 1)
+    plinth_n(wn0, (wn0 + wn1) / 2, wu1, 1)
+    plinth_n((wn0 + wn1) / 2, wn1, wu1 - 0.3, 1)
     plinth_n(rn0, rn1, ru0, -1)
 
-    # --- two-storey gable wing, gable to the street: one window per floor with an awning on the lower one
-    wl = (17.4, 21.2, 0.9, 2.5)
-    wu_ = (18.7, 19.9, UPW + 2.9, UPW + 4.3)
+    # --- gable wing over the garage: single storey + attic (ridge ≤ 9 m above the low NE corner),
+    #     a projecting bay window to the street and a stepped NE side wall (DCP 4.4b/c)
+    wl = (17.2, 21.2, 0.9, 2.4)
+    wu_ = (18.6, 20.0, EAVE_WING + 0.6, EAVE_WING + 1.9)
     wall_u(wu0, wu1, wn0, wn0 + T, 0, EAVE_WING, [wl], "clad")
-    window_u(*wl, wn0, wn0 + T, cols=3, rows=2, awning=True)
     zr_w = gable_u(wu0, wu1, wn0, wn0 + T, EAVE_WING, PITCH_WING, "clad", opening=wu_)
     window_u(*wu_, wn0, wn0 + T, cols=2, rows=2)
+    bn0 = wn0 - 0.5  # bay window: projects 0.5 m, its own skillion roof
+    wall_u(wl[0] - 0.2, wl[1] + 0.2, bn0, bn0 + 0.2, 0, 2.75, [(wl[0], wl[1], 0.9, 2.4)], "clad")
+    wall_n(bn0, wn0, wl[0] - 0.2, wl[0], 0, 2.75, [], "clad")
+    wall_n(bn0, wn0, wl[1], wl[1] + 0.2, 0, 2.75, [], "clad")
+    window_u(*wl, bn0, bn0 + 0.2, cols=3, rows=2)
+    slab((wl[0] - 0.35, bn0 - 0.3, 2.8), (wl[1] + 0.35, bn0 - 0.3, 2.8), (wl[1] + 0.35, wn0, 3.05), (wl[0] - 0.35, wn0, 3.05), 0.06, "roof_x")
+    plinth_u(wl[0] - 0.2, wl[1] + 0.2, bn0, -1)
     rl = (16.6, 22.0, 0.0, 2.7)
-    wall_u(wu0, wu1, wn1 - T, wn1, 0, EAVE_WING, [rl, (17.9, 20.7, UPW + 0.9, UPW + 2.1)], "clad")
+    wall_u(wu0, wu1, wn1 - T, wn1, 0, EAVE_WING, [rl], "clad")
     window_u(*rl, wn1 - T, wn1, cols=3, rows=1, outward=1)
-    window_u(17.9, 20.7, UPW + 0.9, UPW + 2.1, wn1 - T, wn1, cols=3, rows=1, outward=1)
-    gable_u(wu0, wu1, wn1 - T, wn1, EAVE_WING, PITCH_WING, "clad")
-    wall_n(wn0, wn1, wu1 - T, wu1, 0, EAVE_WING, [], "clad")
+    nstep = (wn0 + wn1) / 2  # NE side wall stepped in 0.3 m half way along
+    wall_n(wn0, nstep, wu1 - T, wu1, 0, EAVE_WING, [], "clad")
+    wall_n(nstep, wn1, wu1 - T - 0.3, wu1 - 0.3, 0, EAVE_WING, [], "clad")
+    box(wu1 - 0.3, wu1, nstep - 0.05, nstep + 0.25, 0, EAVE_WING, "clad")
     wall_n(mn1, wn1, wu0, wu0 + T, 0, EAVE_WING, [], "clad")
-    box(wu0 + T, wu1 - T, wn0 + T, wn1 - T, UPW - 0.25, UPW, "slab")
-    roof_ridge_n(wn0, wn1, wu0, wu1, EAVE_WING, PITCH_WING)
-    room_light(wu0 + 0.5, wu1 - 0.5, wn0 + 0.5, wn1 - 0.5, UPW - 0.25, 900)
-    room_light(wu0 + 0.5, wu1 - 0.5, wn0 + 0.5, wn1 - 0.5, EAVE_WING + 1.0, 900)
+    box(wu0 + T, wu1 - T, wn0 + T, L["upper"][2], EAVE_WING - 0.05, EAVE_WING + 0.2, "slab")
+    roof_ridge_n(wn0, L["upper"][2] + 0.4, wu0, wu1, EAVE_WING, PITCH_WING)
+    room_light(wu0 + 0.5, wu1 - 0.5, wn0 + 0.5, wn1 - 0.5, EAVE_WING - 0.1, 900)
     box(18.0, 20.6, wn0 + 1.2, wn0 + 2.2, 0.72, 0.77, "walnut")
     cr_pendant(19.3, wn0 + 1.7, 2.0)
 
@@ -374,7 +438,8 @@ def build_house():
     box(gu0 + 0.7, gu1 - 0.7, gn0 + 0.45, gn0 + 0.5, GZ, GZ + 2.4, "slats")
     box(gu0, gu0 + 0.3, gn0, gn1, GZ - 0.3, PADZ + 0.05, "whitebrick")
     box(gu1 - 0.3, gu1 + 0.3, gn0, gn1, GZ - 0.3, PADZ + 0.05, "whitebrick")
-    box(gu0, gu1, gn0, gn1, PADZ - 0.3, PADZ + 0.06, "lawn")
+    box(gu0, gu1, gn0, wn0 - 0.5, PADZ - 0.3, PADZ + 0.06, "lawn")  # planter roof in front of the wing
+    box(gu0 - 0.3, gu0, 1.6, gn0, GZ - 0.3, PADZ + 0.05, "whitebrick")  # apron wall to the front lawn
     box(gu0 - 0.03, gu1 + 0.03, gn0 - 0.03, gn0 + 0.38, PADZ + 0.05, PADZ + 0.13, "whitebrick")
     for x in (gu0 + 0.35, gu1 - 0.35):
         box(x - 0.08, x + 0.08, gn0 - 0.14, gn0, GZ + 1.9, GZ + 2.3, "black")
@@ -476,6 +541,23 @@ def build_house():
     # --- lawn over the whole level pad, out to the side and rear boundaries (paving and floors sit above it)
     for tri in LAY.get("lawn_tris", []):
         poly([(u, n, PADZ + 0.012) for u, n in tri], "lawn")
+
+    # --- existing Colorbond fences on the side boundaries (beige to the NE, sage green to the SW), behind the building line
+    for (ua, na), (ub, nb), mat in (((0.0, 0.0), (-5.1, 32.5), "fence_sage"), ((22.9, 0.0), (29.8, 44.5), "fence_beige")):
+        L_ = math.hypot(ub - ua, nb - na)
+        k0, k1 = int(6.5 / 2.4), int(L_ / 2.4)
+        for k in range(k0, k1):
+            t0, t1 = k * 2.4 / L_, min((k + 1) * 2.4 / L_, 1.0)
+            u0_, n0_ = ua + (ub - ua) * t0, na + (nb - na) * t0
+            u1_, n1_ = ua + (ub - ua) * t1, na + (nb - na) * t1
+            g = max(zg(u0_, n0_), zg(u1_, n1_))
+            nx_, nn_ = -(n1_ - n0_) / (2.4 * (t1 - t0) / (t1 - t0) if t1 > t0 else 1), (u1_ - u0_)
+            ln = math.hypot(n1_ - n0_, u1_ - u0_) or 1
+            ox, on = -(n1_ - n0_) / ln * 0.02, (u1_ - u0_) / ln * 0.02
+            faces(mat, [(u0_ - ox, n0_ - on, g - 0.3), (u1_ - ox, n1_ - on, g - 0.3), (u1_ + ox, n1_ + on, g - 0.3), (u0_ + ox, n0_ + on, g - 0.3),
+                        (u0_ - ox, n0_ - on, g + 1.8), (u1_ - ox, n1_ - on, g + 1.8), (u1_ + ox, n1_ + on, g + 1.8), (u0_ + ox, n0_ + on, g + 1.8)],
+                  [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)])
+            box(u0_ - 0.03, u0_ + 0.03, n0_ - 0.03, n0_ + 0.03, g - 0.3, g + 1.85, mat)
 
     # --- retaining walls along the pad edge (cut at the rear, fill at the sides), stepping to the ground
     pts = PAD_OUTLINE
@@ -661,7 +743,7 @@ def export_mesh(path):
     """house geometry (everything except terrain, street, plants, trees) as triangles with base colours"""
     skip = {"terrain", "backdrop", "asphalt", "kerb", "concrete", "aggregate", "mulch", "euc", "olive", "shrub",
             "hedge", "hydrangea", "hydrangea_lime", "tussock", "bark", "darkbark", "glass", "bulb", "lamp", "fire"}
-    colours = {"clad": (238, 236, 230), "limestone": (214, 202, 178), "flagstone": (190, 182, 168), "whitebrick": (236, 234, 228), "roof_x": (45, 47, 50), "roof_y": (45, 47, 50),
+    colours = {"fence_beige": (217, 208, 184), "fence_sage": (158, 169, 141), "clad": (238, 236, 230), "limestone": (214, 202, 178), "flagstone": (190, 182, 168), "whitebrick": (236, 234, 228), "roof_x": (45, 47, 50), "roof_y": (45, 47, 50),
                "black": (25, 25, 26), "timber": (122, 90, 62), "deck": (130, 98, 70), "door": (110, 78, 50),
                "paving": (212, 205, 190), "coping": (225, 220, 208), "lawn": (95, 122, 58), "water": (64, 172, 212),
                "pooltile": (143, 208, 227), "slats": (70, 52, 38), "floor": (138, 102, 70), "slab": (232, 226, 214)}
@@ -735,8 +817,14 @@ def main():
         "limestone": img_mat("limestone", "stone.png", 0.35, 0.92, bump=0.7, tint=(1.07, 1.05, 1.0)),
         "flagstone": img_mat("flagstone", "stone.png", 0.6, 0.85, bump=0.4, tint=(0.95, 0.95, 0.95)),
         "fire": flat_mat("fire", (1, 0.4, 0.1), 0.5, emit=(1.0, 0.42, 0.12), strength=40),
+        "fence_beige": seam_roof("fence_beige", "X"), "fence_sage": seam_roof("fence_sage", "Y"),
         "terrain": terrain_mat("terrain", True), "grass": terrain_mat("grass", False),
     })
+    for fname, hexc in (("fence_beige", "#d9d0b8"), ("fence_sage", "#9ea98d")):  # Colorbond colours from the site photos
+        fb = MATS[fname].node_tree.nodes["Principled BSDF"]
+        fb.inputs["Base Color"].default_value = (*srgb(hexc), 1)
+        fb.inputs["Metallic"].default_value = 0.3
+        fb.inputs["Roughness"].default_value = 0.5
     w = MATS["water"] = bpy.data.materials.new("water")
     w.use_nodes = True
     bw = w.node_tree.nodes["Principled BSDF"]
