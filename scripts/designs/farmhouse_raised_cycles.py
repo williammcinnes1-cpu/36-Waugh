@@ -519,19 +519,27 @@ def rear_wing_roof(u0, u1, ns, n1, ze, pitch, zh, tl, o=0.45):
     um = (u0 + u1) / 2
     dz = o * tp
     n_e = L["wing"][3] + o                     # lean-to stops at a 0.45 m eave past the garage wing: sun into the ground floor
-    ze = ze + RP                              # the wing sits a level up: its own gable roof, south gable above the lean-to
-    zr = ze + (u1 - u0) / 2 * tp
-    n_s = L["rear"][2]
-    roof_poly([(u0 - o, n1 + o), (u0 - o, n_s - 0.15), (um, n_s - 0.15), (um, n1 + o)], lambda u, n: ze + (u - u0) * tp, "roof_y")
-    roof_poly([(um, n1 + o), (um, n_s - 0.15), (u1 + o, n_s - 0.15), (u1 + o, n1 + o)], lambda u, n: ze + (u1 - u) * tp, "roof_y")
-    for n in (n1 + o, n_s - 0.15):
-        slab((u0 - o, n, ze - dz - 0.12), (um, n, zr - 0.07), (um, n, zr + 0.2), (u0 - o, n, ze - dz + 0.15), 0.05, "black")
-        slab((um, n, zr - 0.07), (u1 + o, n, ze - dz - 0.12), (u1 + o, n, ze - dz + 0.15), (um, n, zr + 0.2), 0.05, "black")
-    box(um - 0.09, um + 0.09, n_s - 0.15, n1 + o, zr + 0.08, zr + 0.2, "black")
-    eave_trim_n(n_s - 0.15, n1 + o, u0 - o, ze - dz, -1)
-    eave_trim_n(n_s - 0.15, n1 + o, u1 + o, ze - dz, 1)
-    soffit_strip_n((n_s - 0.15, n1 + o), u0, u0 - o, ze - dz)
-    soffit_strip_n((n_s - 0.15, n1 + o), u1, u1 + o, ze - dz)
+    ze = UF + 2.6                             # pool house is on the upper-floor level; its eave above that ceiling
+    tp = math.tan(math.radians(15))
+    zr = ze + (u1 - u0) / 2 * tp              # stays below the main upper ridge
+    dz = o * tp
+    unr = L["upper"][3]
+    t36 = math.tan(PITCH_UP)
+    nv = lambda z: unr - (z - UE) / t36       # where a height meets the main roof's rear slope (valley line)
+    zl = lambda u: ze + (u - u0) * tp
+    zrr = lambda u: ze + (u1 - u) * tp
+    roof_poly([(u0 - o, n1 + o), (u0 - o, nv(zl(u0 - o))), (um, nv(zr)), (um, n1 + o)], lambda u, n: zl(u), "roof_y")
+    roof_poly([(um, n1 + o), (um, nv(zr)), (u1 + o, nv(zrr(u1 + o))), (u1 + o, n1 + o)], lambda u, n: zrr(u), "roof_y")
+    n = n1 + o
+    slab((u0 - o, n, ze - dz - 0.12), (um, n, zr - 0.07), (um, n, zr + 0.2), (u0 - o, n, ze - dz + 0.15), 0.05, "black")
+    slab((um, n, zr - 0.07), (u1 + o, n, ze - dz - 0.12), (u1 + o, n, ze - dz + 0.15), (um, n, zr + 0.2), 0.05, "black")
+    box(um - 0.09, um + 0.09, nv(zr), n1 + o, zr + 0.08, zr + 0.2, "black")
+    n_v = nv(ze - dz)
+    eave_trim_n(n_v, n1 + o, u0 - o, ze - dz, -1)
+    eave_trim_n(n_v, n1 + o, u1 + o, ze - dz, 1)
+    soffit_strip_n((n_v, n1 + o), u0, u0 - o, ze - dz)
+    soffit_strip_n((n_v, n1 + o), u1, u1 + o, ze - dz)
+    n_s = ns
     return zr, n_e, n_s
 
 
@@ -896,8 +904,7 @@ def build_house():
     ROOF["n_e"], ROOF["n_r"], ROOF["zr_rear"] = n_e, n_r, zr_w
     rc0, rc1, rcn = REAR_X[0]
     rm = (ru0 + ru1) / 2
-    for pts in ([(ue_, un1), (ru1, un1), (ru1, rn0), (ue_, rn0)],
-                [(ru1, un1), (rc0, un1), (rc0, n_e), (ru1, n_e)],
+    for pts in ([(ru1, un1), (rc0, un1), (rc0, n_e), (ru1, n_e)],
                 [(rc0, rcn), (rc1, rcn), (rc1, n_e), (rc0, n_e)],
                 [(rc1, un1), (wu1 + o, un1), (wu1 + o, n_e), (rc1, n_e)]):
         roof_poly(pts, lambda u, n: zb_(n), "roof_x")
@@ -977,23 +984,21 @@ def build_house():
     downpipe(wu1 + 0.12, n_e - 0.1, zb_(n_e) - 0.03, 0.0, du=-0.4)
 
     # --- the long west family wing: big sliding doors east onto the courtyard, glazed gable north
-    EW = ER + RP                                    # raised wing: floor at RP, same ceiling height as before
-    box(ru0, ru1, rn0, rn1, RP - 0.25, RP, "floor")
-    sl = (rn0 + 2.4, rn1 - 0.6, RP, RP + 2.45)
-    wall_n(rn0, rn1, ru1 - T, ru1, 0, EW, [sl], "clad")
-    window_n(*sl, ru1 - T, ru1, cols=7, rows=1, outward=1)   # pool house bifolds
-    wall_n(rn0, rn1, ru0, ru0 + T, 0, EW, [(rn0 + 4.4, rn0 + 5.6, RP + 1.2, RP + 2.2)], "clad")
-    window_n(rn0 + 4.4, rn0 + 5.6, RP + 1.2, RP + 2.2, ru0, ru0 + T, cols=1, rows=1, outward=-1)
-    wall_u(ru0, ru1, rn0, rn0 + T, 0, EW, [], "clad")                        # south wall, its gable above the lean-to
-    gable_u(ru0, ru1, rn0, rn0 + T, EW, PITCH_REAR, "clad")
+    EW = UF + 2.6                                   # pool house on the upper-floor level, joined to the view storey
+    box(ru0, ru1, un1, rn1, UF - 0.25, UF, "floor")
+    sl = (rn0 + 1.4, rn1 - 0.6, UF, UF + 2.4)
+    wall_n(un1, rn1, ru1 - T, ru1, 0, EW, [sl], "clad")
+    window_n(*sl, ru1 - T, ru1, cols=7, rows=1, outward=1)   # pool house bifolds onto the terrace
+    wall_n(un1, rn1, ru0, ru0 + T, 0, EW, [(rn0 + 4.4, rn0 + 5.6, UF + 1.0, UF + 2.0)], "clad")
+    window_n(rn0 + 4.4, rn0 + 5.6, UF + 1.0, UF + 2.0, ru0, ru0 + T, cols=1, rows=1, outward=-1)
     wall_u(ru0, ru1, rn1 - T, rn1, 0, EW, [], "clad")                        # solid north end (client: no low glass)
-    gable_u(ru0, ru1, rn1 - T, rn1, EW, PITCH_REAR, "clad", opening=(rm - 0.9, rm + 0.9, EW + 0.2, EW + 0.85))
-    window_u(rm - 0.9, rm + 0.9, EW + 0.2, EW + 0.85, rn1 - T, rn1, cols=3, rows=1, outward=1)
+    gable_u(ru0, ru1, rn1 - T, rn1, EW, math.radians(15), "clad", opening=(rm - 0.9, rm + 0.9, EW + 0.1, EW + 0.6))
+    window_u(rm - 0.9, rm + 0.9, EW + 0.1, EW + 0.6, rn1 - T, rn1, cols=3, rows=1, outward=1)
     room_light(ru0 + 0.5, ru1 - 0.5, rn0 + 0.5, rn1 - 0.5, EW, 1500)
-    box(2.4, 6.0, rn0 + 3.0, rn0 + 4.0, RP, RP + 0.45, "fabric")
-    box(2.6, 5.8, rn0 + 6.4, rn0 + 7.4, RP + 0.72, RP + 0.77, "walnut")
-    downpipe(ru1 + 0.55, rn1 + 0.3, EW - 0.45 * math.tan(PITCH_REAR) - 0.03, RP, du=-0.4)
-    downpipe(ru0 - 0.55, rn1 + 0.3, EW - 0.45 * math.tan(PITCH_REAR) - 0.03, 0.0, du=0.4)
+    box(2.4, 6.0, rn0 + 3.0, rn0 + 4.0, UF, UF + 0.45, "fabric")
+    box(2.6, 5.8, rn0 + 6.4, rn0 + 7.4, UF + 0.72, UF + 0.77, "walnut")
+    downpipe(ru1 + 0.55, rn1 + 0.3, EW - 0.45 * math.tan(math.radians(15)) - 0.03, RP, du=-0.4)
+    downpipe(ru0 - 0.55, rn1 + 0.3, EW - 0.45 * math.tan(math.radians(15)) - 0.03, 0.0, du=0.4)
     # --- rough limestone chimney on the SW gable end, stepping in above the eave
     nmid = (un0 + un1) / 2
     zc0 = UF + 0.4
@@ -1084,7 +1089,7 @@ def build_house():
         box(a_, c_, n0_, n1_, ZD - 0.08, ZD + 0.02, "lawn")
     for a_, c_, n0_, n1_ in ((pu0 - 1.5, pu0 - 0.3, dn0, pn1 + 1.2), (pu1 + 0.3, pu1 + 1.0, dn0, pn1 + 1.2),
                              (pu0 - 0.3, pu1 + 0.3, dn0, pn0 - 0.3), (pu0 - 0.3, pu1 + 0.3, pn1 + 0.3, pn1 + 1.2),
-                             (ru1, ru1 + 2.5, rn0 + 1.8, rn1 + 0.5), (ru1 + 2.5, pu0 - 1.5, dn0, dn0 + 1.5)):
+                             (ru1 + 2.5, pu0 - 1.5, dn0, dn0 + 1.5)):
         box(a_, c_, n0_, n1_, ZD - 0.08, ZD + 0.04, "paving")                         # paving only around the pool and pool house
     box(ru1 + 1.6, 26.0, dn0 - 0.04, dn0 + 0.3, ZD - 0.06, ZD + 0.05, "coping")          # coping on the front wall
     box(ru1 + 1.3, ru1 + 1.64, rn0 + 1.8, dn0, ZD - 0.06, ZD + 0.05, "coping")
@@ -1111,6 +1116,15 @@ def build_house():
     for x in ((pu0 + pu1) / 2 - 0.8, (pu0 + pu1) / 2 + 0.8):
         cyl((x, pn1 + 1.6, ZD + 0.03), (x, pn1 + 1.6, ZD + 0.6), 0.32, 0.4, "limestone", 12)
         bush((x, pn1 + 1.6, ZD + 1.0), 0.42, "hedge", 18)
+    # pool-house terrace at the upper-floor level outside the bifolds, glass balustrade, steps DOWN to the pool deck
+    tn0, tn1, tu1 = rn0 + 1.8, rn1 + 0.3, ru1 + 2.4
+    box(ru1, tu1, tn0, tn1, ZD - 0.06, UF - 0.06, "limestone")
+    box(ru1, tu1 + 0.04, tn0 - 0.04, tn1, UF - 0.08, UF + 0.03, "paving")
+    box(tu1 - 0.03, tu1, tn0, tn1 - 1.6, UF + 0.03, UF + 1.05, "glass")
+    box(ru1, tu1, tn0, tn0 + 0.03, UF + 0.03, UF + 1.05, "glass")
+    ns_ = 7
+    for k in range(1, ns_):                       # steps run north from the terrace down to the deck lawn
+        box(tu1 - 1.6, tu1, tn1, tn1 + (ns_ - k) * 0.3, ZD - 0.06, ZD + (UF - ZD) * k / ns_, "flagstone")
     # raised lawn behind and beside the west wing, at the same level (clipped to the lot)
     rlp = [(-4.5, rn1), (ru1, rn1), (ru1, 35.6), (4.9, 35.6), (-4.5, 32.7)]   # inside the SW and rear boundaries
     flat_poly(rlp, ZD + 0.02, "lawn")
