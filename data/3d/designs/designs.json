@@ -76,6 +76,38 @@
   ]
  },
  {
+  "id": "sage_stone",
+  "name": "Sage and Stone",
+  "file": "designs/sage_stone.txt",
+  "note": "Two-tone farmhouse: a white board-and-batten two-storey gable (upper retreat with street and east views) and light sage gabled wings on a pale limestone base, timber portico and brass trim; modest ground-floor street windows, big glass and pool on the north courtyard, terraced out to every boundary.",
+  "facts": [
+   [
+    "Lot area",
+    "≈1,093 m²"
+   ],
+   [
+    "Zoning",
+    "R1 General Residential"
+   ],
+   [
+    "House + garage footprint",
+    "365 m² (33%)"
+   ],
+   [
+    "Floor level",
+    "157.6 m AHD"
+   ],
+   [
+    "Earthworks",
+    "cut ≤2.7 m · fill ≤1.8 m"
+   ],
+   [
+    "Bushfire prone",
+    "rear half (vegetation buffer)"
+   ]
+  ]
+ },
+ {
   "id": "black_barn",
   "name": "Modern Black Barnhouse",
   "file": "designs/black_barn.txt",
