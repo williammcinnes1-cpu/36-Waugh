@@ -1,0 +1,46 @@
+[
+ {
+  "id": "farmhouse_v2",
+  "name": "Farmhouse: stone and verandah",
+  "file": "designs/farmhouse_v2.txt",
+  "note": "White board-and-batten over a limestone base, deep verandah, upper view storey to the street and east, garage under the house; living rooms, pool and outdoor room on the north courtyard.",
+  "facts": [
+   [
+    "Lot area",
+    "≈1,093 m²"
+   ],
+   [
+    "Zoning",
+    "R1 General Residential"
+   ],
+   [
+    "House + garage footprint",
+    "418 m² (38%)"
+   ],
+   [
+    "Floor level",
+    "157.6 m AHD"
+   ],
+   [
+    "Earthworks depth",
+    "cut ≤2.8 m · fill ≤1.9 m"
+   ],
+   [
+    "Cut / fill volume",
+    "≈659 / 290 m³"
+   ],
+   [
+    "Net soil",
+    "≈369 m³ to remove"
+   ],
+   [
+    "Pool excavation",
+    "≈60 m³ extra"
+   ],
+   [
+    "Bushfire prone",
+    "rear half (vegetation buffer)"
+   ]
+  ]
+ }
+]
