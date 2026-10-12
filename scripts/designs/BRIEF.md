@@ -126,3 +126,9 @@ This is the shared brief for every house concept. Each designer gets a separate 
 - **Everything else rectangular,** in black steel-framed glazing.
 - **Never** several arched gables or rows of arched windows. This applies even to the Mediterranean and French styles.
 - **Client clarification: no arches on big windows, ever.** All large glazing, including the north courtyard glass, gable glazing and sliding or stacker doors, is rectangular. An arch is allowed only on a front door or a small feature opening.
+
+## Rear garden rule (client feedback: "the elevated rear garden was a nice touch… having most of it depressed into the yard was adding to privacy")
+- **Keep a small raised garden terrace at the very back** (about 0.8–1.2 m above the courtyard, as in hill_country): a pergola or seating nook, planting and a low stone retaining wall with steps.
+  - It should be a modest strip along the rear boundary or a rear corner, not a large area.
+- **Keep MOST of the yard sunken:** the courtyard, pool and main lawn stay at pad level, cut into the slope. The rear and side retaining walls plus fences then screen it from the neighbours and give privacy.
+- **Don't raise the main lawn** up to natural ground level.
