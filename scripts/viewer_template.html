@@ -52,6 +52,10 @@ input[type="range"] { width: 100%; accent-color: var(--lot); }
 button { font: 500 0.86rem var(--font-body); color: var(--fg); background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
 button:hover { border-color: var(--muted); }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--lot); outline-offset: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 7px 14px; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--panel); }
+.tag.house { background: var(--lot); }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .note { color: var(--muted); font-size: 0.78rem; line-height: 1.5; margin: 0; }
 .note strong { color: var(--fg); font-weight: 600; }
@@ -90,6 +94,23 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lot); outli
         <dt>Block range</dt><dd>__RANGE__</dd>
       </dl>
     </section>
+    <section>
+      <p class="label">Proposed house (indicative massing)</p>
+      <dl class="facts">
+        <dt>House footprint</dt><dd>21.8 × 14.0 m</dd>
+        <dt>Garage (street level)</dt><dd>6.4 × 7.4 m</dd>
+        <dt>Site coverage</dt><dd>≈353 m² (32%)</dd>
+        <dt>Floor level</dt><dd>__FFL__ m AHD</dd>
+        <dt>Ridge</dt><dd>__RIDGE__ m AHD</dd>
+        <dt>Earthworks</dt><dd>cut ≤1.8 · fill ≤2.3 m</dd>
+      </dl>
+    </section>
+    <section class="toggles">
+      <label><input type="checkbox" id="tHouse" checked>Show proposed house and earthworks</label>
+      <div class="row"><span class="label" style="margin:0">Display</span>
+        <div class="seg" role="group" aria-label="Display"><button type="button" id="mSurf" aria-pressed="true">Surface</button><button type="button" id="mPts" aria-pressed="false">Point cloud</button></div>
+      </div>
+    </section>
     <section class="control">
       <div class="row"><label class="label" for="exag" style="margin:0">Vertical exaggeration</label><span class="val" id="exagVal">1.0×</span></div>
       <input type="range" id="exag" min="1" max="4" step="0.1" value="1">
@@ -108,7 +129,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lot); outli
       <button type="button" id="vStreet">From the street</button>
       <button type="button" id="vTop">Plan view</button>
     </section>
-    <p class="note"><strong>Indicative only.</strong> Terrain is the NSW 5 m elevation grid (from stereo imagery, accuracy around ±1 m), resampled to 1 m and draped with the February 2014 aerial photo. Buildings and trees are not modelled. Use a registered surveyor's detail and level survey for design.</p>
+    <p class="note"><strong>Indicative only.</strong> Terrain is the NSW 5 m elevation grid (from stereo imagery, accuracy around ±1 m), resampled to 1 m and draped with the February 2014 aerial photo. Existing buildings and trees are not modelled. The house is a massing scaled from the concept image, not a design. Use a registered surveyor's detail and level survey for design.</p>
   </aside>
 </div>
 
@@ -120,10 +141,18 @@ const TEXTURE = "data:image/jpeg;base64,__TEXTURE__";
 
 (function () {
   const N = DATA.size, BASE = DATA.base, HALF = N / 2;
-  const raw = Uint8Array.from(atob(DATA.heights), c => c.charCodeAt(0));
-  const H = new Float32Array(N * N);
-  const dv = new DataView(raw.buffer);
-  for (let i = 0; i < N * N; i++) H[i] = dv.getUint16(i * 2, true) / 1000 + BASE; // row 0 = south
+  const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  function decodeHeights(s) {
+    const dv = new DataView(b64(s).buffer), out = new Float32Array(N * N);
+    for (let i = 0; i < N * N; i++) out[i] = dv.getUint16(i * 2, true) / 1000 + BASE; // row 0 = south
+    return out;
+  }
+  const H_EXIST = decodeHeights(DATA.heights), H_HOUSE = decodeHeights(DATA.heightsHouse);
+  const H = new Float32Array(H_EXIST);
+  const GROUND_RGB = b64(DATA.groundRGB);
+  const HP_RAW = new DataView(b64(DATA.housePts).buffer), HP_RGB = b64(DATA.housePtsRGB);
+  const HP_N = HP_RGB.length / 3;
+  let showHouse = true, mode = "surface";
 
   const css = getComputedStyle(document.documentElement);
   const tok = n => new THREE.Color(css.getPropertyValue(n).trim() || "#ff0000");
@@ -227,6 +256,69 @@ const TEXTURE = "data:image/jpeg;base64,__TEXTURE__";
     });
     return g;
   }
+  // Proposed house mesh (grid-local x east, y north, z AHD), one colour per face
+  const srgb = (r, g, b) => new THREE.Color(r / 255, g / 255, b / 255).convertSRGBToLinear();
+  const houseMesh = new THREE.Mesh(new THREE.BufferGeometry(),
+    new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+  scene.add(houseMesh);
+  function buildHouse() {
+    const P = DATA.house.positions, F = DATA.house.faces, C = DATA.house.colors;
+    const pos = new Float32Array(F.length * 3), col = new Float32Array(F.length * 3);
+    for (let f = 0; f < F.length / 3; f++) {
+      const c = srgb(C[f * 3], C[f * 3 + 1], C[f * 3 + 2]);
+      for (let k = 0; k < 3; k++) {
+        const v = F[f * 3 + k], o = (f * 3 + k) * 3;
+        pos[o] = P[v * 3] - HALF; pos[o + 1] = yOf(P[v * 3 + 2]); pos[o + 2] = -(P[v * 3 + 1] - HALF);
+        col[o] = c.r; col[o + 1] = c.g; col[o + 2] = c.b;
+      }
+    }
+    houseMesh.geometry.dispose();
+    houseMesh.geometry = new THREE.BufferGeometry();
+    houseMesh.geometry.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    houseMesh.geometry.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    houseMesh.geometry.computeVertexNormals();
+  }
+
+  // Point cloud: ground at 1 m from the active surface, house surfaces at 0.25 m
+  const groundPts = new THREE.Points(new THREE.BufferGeometry(),
+    new THREE.PointsMaterial({ size: 1.7, vertexColors: true, sizeAttenuation: true }));
+  const housePts = new THREE.Points(new THREE.BufferGeometry(),
+    new THREE.PointsMaterial({ size: 0.5, vertexColors: true, sizeAttenuation: true }));
+  scene.add(groundPts, housePts);
+  function buildPoints() {
+    const gp = new Float32Array(N * N * 3), gc = new Float32Array(N * N * 3);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const k = j * N + i, c = srgb(GROUND_RGB[k * 3], GROUND_RGB[k * 3 + 1], GROUND_RGB[k * 3 + 2]);
+      gp[k * 3] = i + 0.5 - HALF; gp[k * 3 + 1] = yOf(H[k]); gp[k * 3 + 2] = -(j + 0.5 - HALF);
+      gc[k * 3] = c.r; gc[k * 3 + 1] = c.g; gc[k * 3 + 2] = c.b;
+    }
+    groundPts.geometry.dispose();
+    groundPts.geometry = new THREE.BufferGeometry();
+    groundPts.geometry.setAttribute("position", new THREE.BufferAttribute(gp, 3));
+    groundPts.geometry.setAttribute("color", new THREE.BufferAttribute(gc, 3));
+    const hp = new Float32Array(HP_N * 3), hc = new Float32Array(HP_N * 3);
+    for (let q = 0; q < HP_N; q++) {
+      const x = HP_RAW.getUint16(q * 6, true) / 100, y = HP_RAW.getUint16(q * 6 + 2, true) / 100, z = HP_RAW.getUint16(q * 6 + 4, true) / 100 + BASE;
+      const c = srgb(HP_RGB[q * 3], HP_RGB[q * 3 + 1], HP_RGB[q * 3 + 2]);
+      hp[q * 3] = x - HALF; hp[q * 3 + 1] = yOf(z); hp[q * 3 + 2] = -(y - HALF);
+      hc[q * 3] = c.r; hc[q * 3 + 1] = c.g; hc[q * 3 + 2] = c.b;
+    }
+    housePts.geometry.dispose();
+    housePts.geometry = new THREE.BufferGeometry();
+    housePts.geometry.setAttribute("position", new THREE.BufferAttribute(hp, 3));
+    housePts.geometry.setAttribute("color", new THREE.BufferAttribute(hc, 3));
+  }
+
+  function applyMode() {
+    const pts = mode === "points";
+    terrain.visible = !pts; skirt.visible = !pts;
+    houseMesh.visible = !pts && showHouse;
+    groundPts.visible = pts; housePts.visible = pts && showHouse;
+    document.getElementById("mSurf").setAttribute("aria-pressed", String(!pts));
+    document.getElementById("mPts").setAttribute("aria-pressed", String(pts));
+    houseTag.el.hidden = !showHouse;
+  }
+
   const layers = {};
   function buildOverlays() {
     Object.values(layers).forEach(l => { scene.remove(l); l.traverse(o => o.geometry && o.geometry.dispose()); });
@@ -248,6 +340,10 @@ const TEXTURE = "data:image/jpeg;base64,__TEXTURE__";
   const tags = DATA.corners.map(c => {
     const el = document.createElement("div"); el.className = "tag"; el.textContent = "≈" + hAt(c.x, c.y).toFixed(1) + " m"; stage.appendChild(el); return { el, c };
   });
+  const hc = DATA.house.positions, hn = hc.length / 3;
+  let hx = 0, hy = 0; for (let q = 0; q < hn; q++) { hx += hc[q * 3]; hy += hc[q * 3 + 1]; }
+  const houseTag = { el: Object.assign(document.createElement("div"), { className: "tag house", textContent: "Proposed house · floor ≈" + DATA.houseInfo.FFL.toFixed(1) + " m AHD" }), x: hx / hn, y: hy / hn, z: DATA.houseInfo.FFL + 12 };
+  stage.appendChild(houseTag.el);
   const streetTag = document.createElement("div"); streetTag.className = "tag street"; streetTag.textContent = "Waugh Street"; stage.appendChild(streetTag);
 
   function applyToggles() {
@@ -260,11 +356,15 @@ const TEXTURE = "data:image/jpeg;base64,__TEXTURE__";
   }
 
   function rebuildHeights() {
+    H.set(showHouse ? H_HOUSE : H_EXIST);
     for (let k = 0; k < N * N; k++) pos[k * 3 + 1] = yOf(H[k]);
     geo.attributes.position.needsUpdate = true;
     geo.computeVertexNormals();
     buildSkirt();
     buildOverlays();
+    buildHouse();
+    buildPoints();
+    applyMode();
   }
 
   const lotC = DATA.lotCentre;
@@ -291,6 +391,9 @@ const TEXTURE = "data:image/jpeg;base64,__TEXTURE__";
     renderer.render(scene, camera);
     tags.forEach(t => placeTag(t.el, t.c.x, t.c.y, 3.2));
     placeTag(streetTag, DATA.street[0], DATA.street[1], 1);
+    v.set(houseTag.x - HALF, yOf(houseTag.z), -(houseTag.y - HALF)).project(camera);
+    houseTag.el.style.visibility = v.z > 1 ? "hidden" : "visible";
+    houseTag.el.style.left = ((v.x + 1) / 2 * stage.clientWidth) + "px"; houseTag.el.style.top = ((1 - v.y) / 2 * stage.clientHeight) + "px";
     const az = controls.getAzimuthalAngle();
     northSvg.style.transform = `rotate(${az * 180 / Math.PI}deg)`;
   }
@@ -312,6 +415,9 @@ const TEXTURE = "data:image/jpeg;base64,__TEXTURE__";
     controls.update(); render();
   });
   ["tLot", "tFire", "tC2", "tLvl"].forEach(id => document.getElementById(id).addEventListener("change", () => { applyToggles(); render(); }));
+  document.getElementById("tHouse").addEventListener("change", e => { showHouse = e.target.checked; rebuildHeights(); render(); });
+  document.getElementById("mSurf").onclick = () => { mode = "surface"; applyMode(); render(); };
+  document.getElementById("mPts").onclick = () => { mode = "points"; applyMode(); render(); };
   document.getElementById("vLot").onclick = () => setView("lot");
   document.getElementById("vStreet").onclick = () => setView("street");
   document.getElementById("vTop").onclick = () => setView("top");
