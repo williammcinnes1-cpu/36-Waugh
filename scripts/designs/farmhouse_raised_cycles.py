@@ -548,7 +548,7 @@ def rear_wing_roof(u0, u1, ns, n1, ze, pitch, zh, tl, o=0.45):
 LOT_Q = [(0.0, 0.0), (22.9, 0.0), (29.8, 44.5), (-5.1, 32.5)]
 LOT625 = [(22.9, 0.0), (40.2, -4.8), (61.5, 30.5), (29.8, 44.5)]      # NE neighbour (cadastre, street frame)
 LOT623 = [(0.0, 0.0), (-5.1, 32.5), (-40.0, 20.5), (-24.5, -8.3)]     # SW neighbour
-DT = L.get("terrace_z", 1.0)                                           # raised rear garden above the pad
+DT = RP                                                                 # raised rear garden above the pad
 TERR = [tuple(p) for p in L.get("terrace_outline", [])]
 NEIGHBOURS = [   # simple massing read off the 2014 aerial: 625 white render + terracotta hip, 623 brick + tile hip
     dict(q=[(26.6, 16.6), (38.5, 10.2), (43.0, 21.0), (28.1, 28.6)], wall="nrender", roof="tile_terra", h=2.7, pitch=24),
@@ -1125,6 +1125,28 @@ def build_house():
     ns_ = 7
     for k in range(1, ns_):                       # steps run north from the terrace down to the deck lawn
         box(tu1 - 1.6, tu1, tn1, tn1 + (ns_ - k) * 0.3, ZD - 0.06, ZD + (UF - ZD) * k / ns_, "flagstone")
+    # the whole rear of the lot (north of the deck, and the strip along the NE fence) at the same raised level
+    def _clip(poly_, a_, b_):                   # keep the part left of the directed edge a_->b_
+        out = []
+        side = lambda q: (b_[0] - a_[0]) * (q[1] - a_[1]) - (b_[1] - a_[1]) * (q[0] - a_[0])
+        for q0, q1 in zip(poly_, poly_[1:] + poly_[:1]):
+            s0, s1 = side(q0), side(q1)
+            if s0 >= 0:
+                out.append(q0)
+            if (s0 >= 0) != (s1 >= 0):
+                t = s0 / (s0 - s1)
+                out.append((q0[0] + t * (q1[0] - q0[0]), q0[1] + t * (q1[1] - q0[1])))
+        return out
+    rear = [(-6.0, 35.6), (ru1, 35.6), (ru1, cn1), (26.0, cn1), (26.0, dn0), (40.0, dn0), (40.0, 60.0), (-6.0, 60.0)]
+    lq = LOT_Q
+    for q0, q1 in zip(lq, lq[1:] + lq[:1]):     # lot edges, inset 0.45 m
+        dx, dy = q1[0] - q0[0], q1[1] - q0[1]
+        L_ = math.hypot(dx, dy)
+        off = (-dy / L_ * 0.45, dx / L_ * 0.45)
+        rear = _clip(rear, (q0[0] + off[0], q0[1] + off[1]), (q1[0] + off[0], q1[1] + off[1]))
+    flat_poly(rear, ZD + 0.02, "lawn")
+    for (ua, na), (ub, nb) in zip(rear, rear[1:] + rear[:1]):
+        slab((ua, na, PADZ - 0.3), (ub, nb, PADZ - 0.3), (ub, nb, ZD + 0.02), (ua, na, ZD + 0.02), 0.25, "limestone")
     # raised lawn behind and beside the west wing, at the same level (clipped to the lot)
     rlp = [(-4.5, rn1), (ru1, rn1), (ru1, 35.6), (4.9, 35.6), (-4.5, 32.7)]   # inside the SW and rear boundaries
     flat_poly(rlp, ZD + 0.02, "lawn")
