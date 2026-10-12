@@ -108,38 +108,6 @@
   ]
  },
  {
-  "id": "stone_glass",
-  "name": "Stone and Glass Gables",
-  "file": "designs/stone_glass.txt",
-  "note": "Sawn-sandstone ashlar gables with timber soffits and dark standing-seam roofs: solid stone, a screened bay and a glazed upper retreat to the street, a tall arched glass gable, glazed NE gable and two-storey glass link onto a north pool courtyard, with an olive-grove terrace out to the rear boundary.",
-  "facts": [
-   [
-    "Lot area",
-    "≈1,093 m²"
-   ],
-   [
-    "Zoning",
-    "R1 General Residential"
-   ],
-   [
-    "House + garage footprint",
-    "369 m² (34%)"
-   ],
-   [
-    "Floor level",
-    "157.6 m AHD"
-   ],
-   [
-    "Earthworks",
-    "cut ≤2.3 m · fill ≤1.8 m"
-   ],
-   [
-    "Bushfire prone",
-    "rear half (vegetation buffer)"
-   ]
-  ]
- },
- {
   "id": "black_barn",
   "name": "Modern Black Barnhouse",
   "file": "designs/black_barn.txt",
