@@ -29,6 +29,8 @@ from cycles_render import (ARC, GZ, PADZ, B, MATS, TEX, arc_n, box, cyl, drape, 
 # shared wall / window / roof helpers from the current farmhouse design (reused, not edited)
 from farmhouse_cycles import (frame_rect, window_u, window_n, gable_u, gable_n,  # noqa: E402
                               roof_ridge_u, roof_ridge_n, lantern, room_light, cr_pendant)
+sys.path.insert(0, str(ROOT / "scripts" / "designs"))
+import polish  # noqa: E402
 
 D3 = ROOT / "data" / "3d"
 LAY = json.loads((D3 / "house_massing.json").read_text())
@@ -533,12 +535,14 @@ def build_house():
     for a, c, n0_, n1_ in ((3.0, pu0 - 0.3, 26.5, 32.0), (pu0 - 0.3, 15.0, pn1 + 0.3, 32.0)):
         box(a, c, n0_, n1_, PADZ - 2.0, PADZ - 0.02, "slab")
     for k, x in enumerate((11.2, 12.6, 14.0, 15.4)):
-        box(x - 0.35, x + 0.35, pn1 + 0.7, pn1 + 2.5, PADZ, PADZ + 0.3, "timber")
-        box(x - 0.32, x + 0.32, pn1 + 0.72, pn1 + 2.48, PADZ + 0.3, PADZ + 0.38, "linen")
+        polish.lounger(x, pn1 + 0.6, PADZ + 0.04, math.pi / 2)
     box(10.4, 13.0, 21.9, 22.9, PADZ + 0.72, PADZ + 0.77, "walnut")
+    for x in (10.5, 12.9):
+        for nn in (22.0, 22.8):
+            box(x - 0.04, x + 0.04, nn - 0.04, nn + 0.04, PADZ, PADZ + 0.72, "walnut")
     for x in (10.8, 11.7, 12.6):
-        for nn in (21.5, 23.3):
-            box(x - 0.2, x + 0.2, nn - 0.2, nn + 0.2, PADZ, PADZ + 0.45, "black")
+        for nn, a_ in ((21.45, math.pi / 2), (23.35, -math.pi / 2)):
+            polish.dining_chair(x, nn, PADZ + 0.04, a_)
 
     # ---- landscape surfaces from the site script (whole lot, two terrace levels)
     lift = {"lawn": PADZ + 0.03, "paving": PADZ + 0.035, "mulch": PADZ + 0.04, "lawn_up": UPZ + 0.03, "mulch_up": UPZ + 0.04}
@@ -575,6 +579,8 @@ def build_house():
         obox(u - 0.15, u + 0.15, -nst * 0.34, 0.1, PADZ - 0.3, UPZ + 0.25, "limestone")
     for u in (st0 - 0.4, st1 + 0.4):
         light("POINT", (u + nx * -0.5, nt(u) + nn_ * -0.5, PADZ + 0.4), 8, WARM, size=0.05, name="sconce")
+    # timber pergola with a built-in limestone seat and fire bowl at the SW end of the raised terrace
+    polish.pergola(0.0, nt(0.0), tx, tn_, 5.2 / tx, UPZ, d0=0.5, d1=2.75, stone="limestone")
 
     # ---- boundary retaining walls along the whole pad outline (painted brick, on the lot side of the boundary)
     pts = PAD_OUTLINE
@@ -732,9 +738,7 @@ def build_context():
     # NE neighbour: single-storey white render, terracotta hip roof, lower than our lot
     no = (0.9882, -0.1532)
     c = (22.903 + 0.1544 * 23 + no[0] * 8.1, 23 + no[1] * 8.1)
-    hip_house(c, (0.1532, 0.9882), 9.0, 6.5, zg(*c), 2.7, math.radians(22), "render", "terracotta")
-    c2 = (c[0] + 3.5, c[1] - 11.5)
-    hip_house(c2, (0.1532, 0.9882), 3.2, 3.0, zg(*c), 2.7, math.radians(22), "render", "terracotta")
+    # (modelled in polish.neighbours with windows, trims and its garden)
     # across the street: two-storey white render, dark grey hip roof
     hip_house((10.0, -31.0), (1.0, 0.0), 8.5, 6.0, zg(10.0, -31.0), 5.9, math.radians(22), "render", "roof_grey")
 
@@ -841,12 +845,12 @@ def build_garden(eye):
             for zz in layers:
                 bush((u, n, g + zz), rr(0.6, 0.8) * size, "hedge", 14)
     # upper terrace: olives, hydrangeas along the wall top; olives and box in the courtyard
-    for u in (2.0, 9.5, 17.5, 24.0):
+    for u in (10.6, 18.0, 24.0):
         n = nt(u) + 1.7
         if inside_lot(u, n + 0.8):
             tree((u, n, UPZ), rr(3.6, 4.3), rr(1.6, 2.0), "olive", "darkbark", stems=3, cards_per=22, crown_flat=0.6)
     for u in np.arange(-2.5, 27.0, 0.9):
-        if 13.0 < u < 15.8:
+        if 13.0 < u < 15.8 or 2.2 < u < 8.4:
             continue
         n = nt(u) + 0.45
         if inside_lot(u, n + 0.4):
@@ -926,8 +930,10 @@ def export_glb(path):
 
 
 VIEWS = {
-    "street": dict(eye=(4.5, -12.5, 2.0), at=(12.0, 12.0, 2.9), lens=22),
-    "courtyard": dict(eye=(18.0, 50.0, 9.0), at=(10.5, 24.5, 0.0), lens=24),
+    "street": dict(eye=(10.0, -16.0, 1.7), at=(12.0, 14.0, 3.8), lens=24),
+    "courtyard": dict(eye=(19.0, 40.0, 6.3), at=(7.0, 25.0, -0.5), lens=22),
+    "corner": dict(eye=(30.0, -6.0, 9.0), at=(12.0, 14.0, 4.0), lens=30),
+    "top": dict(eye=(12.0, 22.0, 60.0), at=(12.0, 22.3, 0.0), lens=24),
     "aerial": dict(eye=(48.0, -24.0, 42.0), at=(12.0, 22.0, 0.0), lens=30),
 }
 
@@ -936,9 +942,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--view", default="street")
     ap.add_argument("--scale", type=int, default=50)
-    ap.add_argument("--samples", type=int, default=32)
+    ap.add_argument("--samples", type=int, default=128)
     ap.add_argument("--out", default=str(ROOT / "designs" / "wraparound_street.png"))
-    ap.add_argument("--exposure", type=float, default=0.9)
+    ap.add_argument("--exposure", type=float, default=1.0)
     ap.add_argument("--export-glb", default="")
     a = ap.parse_args()
 
@@ -999,9 +1005,14 @@ def main():
     bw.inputs["Roughness"].default_value = 0.03
 
     cr.build_terrain()
+    polish.sink_pool(L["pool"], PADZ - 2.0, 1.0)
+    polish.chair_mats()
     build_house()
     view = VIEWS.get(a.view, VIEWS["street"])
     build_context()
+    polish.neighbours(across=False)
+    polish.backdrop_trees()
+    polish.street_tree(27.5, arc_n(27.5, ARC["r"] - 1.1), h=8.0, r=3.0)
     build_garden(view["eye"][:2] if not a.export_glb else (1e3, 1e3))
     cr.flush()
     if a.export_glb:
@@ -1009,25 +1020,15 @@ def main():
         print("exported", a.export_glb)
         return
     cr.VIEWS.update(VIEWS)
-    cr.setup_world_and_camera(a.view, 6.0, 232.0, a.exposure)
-
-    sc = bpy.context.scene
-    sc.render.engine = "CYCLES"
-    sc.cycles.device = "CPU"
-    sc.cycles.samples = a.samples
-    sc.cycles.use_adaptive_sampling = True
-    sc.cycles.adaptive_threshold = 0.03
-    sc.cycles.use_denoising = True
-    sc.cycles.max_bounces = 5
-    sc.cycles.transparent_max_bounces = 16
-    sc.cycles.caustics_reflective = False
-    sc.cycles.caustics_refractive = False
-    sc.render.resolution_x, sc.render.resolution_y = 1414, 913
-    sc.render.resolution_percentage = a.scale
-    sc.render.filepath = a.out
-    sc.render.image_settings.file_format = "PNG"
-    bpy.ops.render.render(write_still=True)
-    print("wrote", a.out)
+    env = __import__("os").environ
+    sun_az = {"street": 192.0}.get(a.view, 300.0)
+    cr.setup_world_and_camera(a.view, float(env.get("SUN_EL", 10.0)), sun_az, a.exposure)
+    polish.golden_sky(float(env.get("SKY", 0.4)))
+    polish.water_ripples()
+    polish.sun(float(env.get("SUN_E", 8.0)))
+    polish.fill_light(a.view, float(env.get("FILL", 0.45)))
+    polish.bevel(("clad", "wbrick", "whitebrick", "limestone", "coping", "black", "timber", "paving", "slab", "fstone"))
+    polish.render(a)
 
 
 if __name__ == "__main__":

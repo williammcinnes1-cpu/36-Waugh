@@ -155,7 +155,7 @@ def _inside(u, n, pts):
     return ins
 
 
-def lawn_patch(pts, mat="lawn", step=1.0, lift=0.05, shrink=0.35):
+def lawn_patch(pts, mat="lawn", step=0.75, lift=0.05, shrink=0.0):
     """mown lawn draped on the terrain over a polygon (u, n), cell by cell"""
     us = [p[0] for p in pts]
     ns = [p[1] for p in pts]
@@ -166,7 +166,7 @@ def lawn_patch(pts, mat="lawn", step=1.0, lift=0.05, shrink=0.35):
     for i in range(int((max(us) - u0) / step) + 2):
         for j in range(int((max(ns) - n0) / step) + 2):
             cs = [(u0 + (i + a) * step, n0 + (j + b) * step) for a, b in ((0, 0), (1, 0), (1, 1), (0, 1))]
-            if not all(_inside(cu, cn, q) for cu, cn in cs):
+            if not _inside(sum(c[0] for c in cs) / 4, sum(c[1] for c in cs) / 4, q):
                 continue
             ids = []
             for c in cs:
@@ -179,7 +179,7 @@ def lawn_patch(pts, mat="lawn", step=1.0, lift=0.05, shrink=0.35):
         faces(mat, v, f)
 
 
-def neighbours(across=True):
+def neighbours(across=True, ne=True, sw=True):
     """lot 625 (NE): single-storey white render, terracotta hip roof; lot 623 (SW): cream render, grey tile roof"""
     MATS.setdefault("nb_render", noisy_mat("nb_render", "#e9e5dd", "#f4f1eb", 6, 0.85, 0.05))
     MATS.setdefault("nb_cream", noisy_mat("nb_cream", "#ddd3c2", "#e9e1d3", 6, 0.85, 0.05))
@@ -187,24 +187,30 @@ def neighbours(across=True):
     MATS.setdefault("nb_tile", noisy_mat("nb_tile", "#4d4f51", "#66686a", 14, 0.6, 0.2))
     MATS.setdefault("nb_trim", flat_mat("nb_trim", srgb("#f2f0ea"), 0.6))
     MATS.setdefault("nb_glass", flat_mat("nb_glass", srgb("#2a3236"), 0.08, emit=WARM, strength=0.6))
-    _hip(NB_NE, "nb_render", "nb_terracotta", 2.8, 23)
-    _hip(NB_NE2, "nb_render", "nb_terracotta", 2.7, 23)
-    _hip(NB_SW, "nb_cream", "nb_tile", 2.8, 22)
+    if ne:
+        _hip(NB_NE, "nb_render", "nb_terracotta", 2.8, 23)
+        _hip(NB_NE2, "nb_render", "nb_terracotta", 2.7, 23)
+    if sw:
+        _hip(NB_SW, "nb_cream", "nb_tile", 2.8, 22)
     if across:
         _hip(NB_ACROSS, "nb_render", "nb_tile", 5.9, 24)
     # their gardens: mown lawn, a hedge on the street side, and trees
-    lawn_patch(LOT_625)
-    lawn_patch(LOT_623)
+    if ne:
+        lawn_patch(LOT_625)
+    if sw:
+        lawn_patch(LOT_623)
     if across:
         R = cr.ARC["r"]
         cr.drape(-45, 68, lambda u: cr.arc_n(u, R - 50.0), lambda u: cr.arc_n(u, R - 24.0), 0.05, "lawn", 60, 12)
-    for k in range(18):
+    for k in range(18 if ne else 0):
         u, n = 30.5 + k * 0.85, 1.6 - k * 0.24
         bush((u, n, zg(u, n) + 0.45), 0.5, "hedge", 14)
-    for k in range(16):
+    for k in range(16 if sw else 0):
         u, n = -2.5 - k * 1.1, 1.2 - k * 0.37
         bush((u, n, zg(u, n) + 0.45), 0.5, "hedge", 14)
     for u, n, h, r in ((33.0, 24.0, 5.5, 2.4), (40.0, 6.0, 6.5, 2.8), (-14.0, 14.0, 6.0, 2.6), (-20.0, 1.0, 4.5, 2.0)):
+        if (u > 20 and not ne) or (u < 0 and not sw):
+            continue
         tree((u, n, zg(u, n) - 0.1), h, r, "olive", "darkbark", stems=2, cards_per=26, crown_flat=0.6)
 
 
@@ -348,3 +354,87 @@ def sun(energy=6.0, color=(1.0, 0.6, 0.32), angle=1.0):
             ld.energy = energy
             ld.color = color
             ld.angle = math.radians(angle)
+
+
+def pergola(ua, na, tu, tn, s_c, UPZ, d0=0.6, d1=3.0, frame="timber", stone="limestone", width=4.4, seat=True):
+    """timber pergola with a built-in stone seat and a fire bowl on a raised terrace. (ua, na) is a point on the
+    terrace retaining wall, (tu, tn) the unit direction along it (terrace on its left); s_c the centre (metres along)"""
+    nu, nn_ = -tn, tu
+    hw = width / 2
+
+    def T_(s, d):
+        return (ua + tu * s + nu * d, na + tn * s + nn_ * d)
+
+    def obox(q, z0, z1, mat):
+        faces(mat, [(u, n, z0) for u, n in q] + [(u, n, z1) for u, n in q],
+              [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)])
+    q = [T_(s_c - hw - 0.3, d0 - 0.25), T_(s_c + hw + 0.3, d0 - 0.25), T_(s_c + hw + 0.3, d1 + 0.1), T_(s_c - hw - 0.3, d1 + 0.1)]
+    obox(q, UPZ - 0.05, UPZ + 0.06, "flagstone" if "flagstone" in MATS else stone)
+    for s in (s_c - hw, s_c + hw):
+        for d in (d0 + 0.1, d1 - 0.1):
+            u_, n_ = T_(s, d)
+            box(u_ - 0.09, u_ + 0.09, n_ - 0.09, n_ + 0.09, UPZ, UPZ + 2.55, frame)
+    for d in (d0 + 0.1, d1 - 0.1):
+        a_, b_ = T_(s_c - hw - 0.4, d), T_(s_c + hw + 0.4, d)
+        slab((a_[0], a_[1], UPZ + 2.55), (b_[0], b_[1], UPZ + 2.55), (b_[0] + nu * 0.1, b_[1] + nn_ * 0.1, UPZ + 2.55),
+             (a_[0] + nu * 0.1, a_[1] + nn_ * 0.1, UPZ + 2.55), 0.24, frame)
+    k_ = int(width / 0.42) + 1
+    for k in range(k_):
+        s = s_c - hw - 0.3 + k * (width + 0.6) / (k_ - 1)
+        a_, b_ = T_(s, d0 - 0.3), T_(s, d1 + 0.3)
+        slab((a_[0], a_[1], UPZ + 2.79), (b_[0], b_[1], UPZ + 2.79), (b_[0] + tu * 0.06, b_[1] + tn * 0.06, UPZ + 2.79),
+             (a_[0] + tu * 0.06, a_[1] + tn * 0.06, UPZ + 2.79), 0.16, frame)
+    if seat:
+        obox([T_(s_c - hw + 0.2, d1 - 0.55), T_(s_c + hw - 0.2, d1 - 0.55), T_(s_c + hw - 0.2, d1), T_(s_c - hw + 0.2, d1)], UPZ, UPZ + 0.45, stone)
+        obox([T_(s_c - hw + 0.3, d1 - 0.5), T_(s_c + hw - 0.3, d1 - 0.5), T_(s_c + hw - 0.3, d1 - 0.05), T_(s_c - hw + 0.3, d1 - 0.05)], UPZ + 0.45, UPZ + 0.55, "oatmeal")
+        nc = int((width - 0.6) / 0.95)
+        for k in range(nc):
+            a_, b_ = T_(s_c - hw + 0.35 + k * 0.95, d1 - 0.12), T_(s_c - hw + 1.2 + k * 0.95, d1 - 0.12)
+            slab((a_[0], a_[1], UPZ + 0.55), (b_[0], b_[1], UPZ + 0.55), (b_[0], b_[1], UPZ + 1.0), (a_[0], a_[1], UPZ + 1.0), 0.14, "oatmeal")
+    fx, fn = T_(s_c, (d0 + d1) / 2)
+    cyl((fx, fn, UPZ), (fx, fn, UPZ + 0.35), 0.42, 0.42, stone, 16)
+    k = 16
+    faces(stone, [(fx + 0.42 * math.cos(2 * math.pi * i / k), fn + 0.42 * math.sin(2 * math.pi * i / k), UPZ + 0.35) for i in range(k)], [tuple(range(k))])
+    if "fire" in MATS:
+        faces("fire", [(fx + 0.28 * math.cos(2 * math.pi * i / k), fn + 0.28 * math.sin(2 * math.pi * i / k), UPZ + 0.36) for i in range(k)], [tuple(range(k))])
+    light("POINT", (fx, fn, UPZ + 0.7), 45, (1.0, 0.45, 0.15), size=0.25, name="pool_firepit")
+    ang = math.atan2(tn, tu)
+    for sd in (-1, 1):
+        cx, cn = T_(s_c + sd * 1.35, (d0 + d1) / 2 - 0.35)
+        outdoor_chair(cx, cn, UPZ + 0.06, ang + (math.pi if sd > 0 else 0.0) + sd * 0.35)
+
+
+def water_ripples(strength=0.25, scale=5.0, rough=0.06):
+    """soft wind ripples on the pool so reflections shimmer instead of mirroring crisp shapes"""
+    m = MATS.get("water")
+    if m is None:
+        return
+    nt = m.node_tree
+    b = nt.nodes["Principled BSDF"]
+    b.inputs["Roughness"].default_value = rough
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    mp = nt.nodes.new("ShaderNodeMapping")
+    mp.inputs["Scale"].default_value = (1.0, 2.5, 1.0)
+    nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
+    nz = nt.nodes.new("ShaderNodeTexNoise")
+    nz.inputs["Scale"].default_value = scale
+    nz.inputs["Detail"].default_value = 4
+    nt.links.new(mp.outputs["Vector"], nz.inputs["Vector"])
+    bp = nt.nodes.new("ShaderNodeBump")
+    bp.inputs["Strength"].default_value = strength
+    bp.inputs["Distance"].default_value = 0.02
+    nt.links.new(nz.outputs["Fac"], bp.inputs["Height"])
+    nt.links.new(bp.outputs["Normal"], b.inputs["Normal"])
+
+
+def sink_pool(pool, z, margin=1.5):
+    """push the shared terrain mesh below this design's pool so it cannot poke through the pool floor"""
+    ob = bpy.data.objects.get("terrain")
+    if ob is None:
+        return
+    pu0, pu1, pn0, pn1 = pool
+    for v in ob.data.vertices:
+        u, n, _ = v.co
+        if pu0 - margin < u < pu1 + margin and pn0 - margin < n < pn1 + margin:
+            v.co.z = min(v.co.z, z)
+    ob.data.update()

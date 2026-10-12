@@ -32,14 +32,16 @@ FFL, PAD, GARAGE_FL = hm.FFL, hm.PAD, hm.GARAGE_FL
 DESIGN = {
     "main": (1.0, 15.6, 9.4, 21.4),        # single storey + attic, ridge parallel to the street
     "wing": (15.6, 22.8, 7.5, 22.6),       # gable wing (single storey + attic) over the garage
-    "rear": (1.0, 9.0, 21.4, 32.3),
-    "upper": (1.0, 22.4, 11.5, 17.5),      # the view storey: street (SSE) and east windows, ridge ≤ 9 m above natural ground        # single-storey living wing along the SW side
+    "rear": (1.0, 9.0, 21.4, 32.3),        # long single-storey west family wing, glass onto the courtyard (client-approved)
+    "upper": (1.0, 22.8, 11.5, 17.5),      # the view storey (street SSE + east windows), own gable roof; ridge ≤ 9 m above natural ground
     "verandah": (0.8, 15.4, 7.0, 9.4),      # deep verandah across the main body
     "outdoor": (22.8, 26.0, 25.0, 31.0),    # covered outdoor room with a stone fireplace
     "garage": (16.4, 22.6, 6.3, 13.8),     # street level, under the wing; door 5.5 m+ from the boundary (DCP 4.7.1c)
     "pool": (12.5, 22.5, 28.5, 32.0),
     "stair": (1.6, 3.4, 1.0, 5.4),         # front steps from the gate (SW end) up to the lawn
     "pad_back": 36.0,                       # rear edge of the courtyard pad
+    "terrace": [[15.5, 36.4], [28.8, 36.4], [30.5, 46.0], [15.5, 41.0]],   # small raised rear garden (NE rear corner, ≈1 m up)
+    "terrace_z": 1.0,                       # terrace top above the pad
 }
 WALL_TOP = 156.4   # low street wall (about 0.9 m above the footpath)
 BANK_TOP = 5.0     # the planted bank rises from the wall to lawn level by n = 5
@@ -76,22 +78,32 @@ def cut_fill_volumes(ground, dem, pool=None):
     return round(cut), round(fill), round(pool_m3)
 
 
+def terrace_polygon():
+    """raised rear garden terrace in the NE rear corner, inside the lot"""
+    return Polygon([tuple(A + U * u + NV * n) for u, n in DESIGN["terrace"]]).intersection(LOT.buffer(-0.4))
+
+
 def lawn_triangles(pad, stair):
     """the level part of the pad (behind the front bank, clear of the front steps) as triangles in (u, n),
-    so lawn can run right out to the side and rear boundaries; paving and buildings sit just above it"""
+    so lawn can run right out to the side and rear boundaries; paving and buildings sit just above it.
+    The pool (with its coping) and the raised terrace are cut out so the lawn never covers the water."""
     from shapely.ops import triangulate
+    p = DESIGN["pool"]
     lawn = pad.intersection(frame_poly(-20, 45, BANK_TOP, 60)).difference(frame_poly(stair[0] - 0.4, stair[1] + 0.4, 0, stair[3]))
+    lawn = lawn.difference(frame_poly(p[0] - 0.35, p[1] + 0.35, p[2] - 0.35, p[3] + 0.35)).difference(terrace_polygon())
+    from shapely import constrained_delaunay_triangles
     tris = []
     for part in getattr(lawn, "geoms", [lawn]):
-        dense = part.segmentize(1.5)
-        for t in triangulate(dense):
-            if part.contains(t.centroid):
-                tris.append([[round(c, 3) for c in to_frame(*p)] for p in list(t.exterior.coords)[:3]])
+        if part.geom_type != "Polygon" or part.area < 0.05:
+            continue
+        for t in constrained_delaunay_triangles(part.segmentize(1.5)).geoms:
+            tris.append([[round(c, 3) for c in to_frame(*q)] for q in list(t.exterior.coords)[:3]])
     return tris
 
 
 def designed_ground(dem):
     pad = prep(pad_polygon())
+    terr = prep(terrace_polygon())
     lot = prep(LOT.buffer(0.5))
     g = dem.copy()
     gz = DESIGN["garage"]
@@ -108,6 +120,8 @@ def designed_ground(dem):
                 g[r, c] = np.interp(vv, [s[2], s[3]], [min(g[r, c], 155.7), PAD])
             elif 0.3 <= uu <= gz[0] and 2.2 <= vv < BANK_TOP:                   # planted bank behind the low street wall
                 g[r, c] = np.interp(vv, [2.2, BANK_TOP], [WALL_TOP, PAD])
+            elif terr.contains(Point(e, n)):
+                g[r, c] = PAD + DESIGN["terrace_z"]
             elif pad.contains(Point(e, n)):
                 g[r, c] = PAD
             elif 0.3 <= uu <= 16.2 and 0.0 <= vv < 1.6:                          # front garden bed
@@ -125,7 +139,7 @@ def cmd_ground():
     data["design"] = "farmhouse"
     data["pad_outline"] = [[round(u, 3), round(n, 3)] for u, n in outline]
     data["lawn_tris"] = lawn_triangles(pad, DESIGN["stair"])
-    data["layout"] = DESIGN
+    data["layout"] = dict(DESIGN, terrace_outline=[[round(c, 3) for c in to_frame(*q)] for q in terrace_polygon().exterior.coords])
     data["front"] = {"wall_top": WALL_TOP - FFL, "bank_top": BANK_TOP}
     cut = ground - dem
     footprint = sum(frame_poly(*DESIGN[k]).area for k in ("main", "wing", "rear")) + frame_poly(*DESIGN["garage"]).area
