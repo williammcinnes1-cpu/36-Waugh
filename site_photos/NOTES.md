@@ -15,12 +15,12 @@ Photos: `rear_to_street_1.jpg` … `rear_to_street_5.jpg` (overcast day). What t
   single-storey brick-and-tile houses next to it.
 - **The lot**: vacant, long dry golden grass on red-brown soil, falling toward the street. A dirt vehicle
   track runs from the upper part of the lot down to the street (toward the south-west end of the frontage
-  in the photos) — check whether an existing kerb crossover is there.
+  in the photos) — the client confirms there is no existing driveway crossover.
 
 ## Design implications
 - Upper-floor living facing the street (SSE) and east captures the view; the slope means even the
   ground floor at the rear looks over the street.
 - Upper windows facing the north-east neighbour need privacy treatment (high sills, fixed louvres or
   obscure glazing on the side facing their yard) while keeping the long view.
-- All designs place the driveway at the low north-east end of the frontage; if the existing crossover is
-  at the south-west end, a new crossover needs Council approval (or the driveway moves).
+- No existing driveway crossover: the new one (at the low north-east end, where all designs put the
+  garage) needs a Council driveway/road-reserve approval as part of the build.
