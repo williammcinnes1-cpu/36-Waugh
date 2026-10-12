@@ -1081,7 +1081,7 @@ def build_house():
     dn0 = pn0 - 1.7                                  # deck front (south) edge
     cu0, cu1, cn0, cn1 = ru1, 27.5, mn1, L["pad_back"]
     box(cu0, cu1, cn0, dn0, PADZ - 0.3, PADZ + 0.03, "paving")                     # lower courtyard
-    deck = [(ru1, rn0 + 1.8, ru1 + 1.6, dn0), (22.8, 25.0, 26.0, dn0), (ru1, pu0, dn0, cn1), (pu1, 26.0, dn0, cn1),
+    deck = [(ru1, ru1 + 1.6, rn0 + 1.8, dn0), (22.8, 25.0, 26.0, dn0), (ru1, pu0, dn0, cn1), (pu1, 26.0, dn0, cn1),
             (pu0, pu1, dn0, pn0), (pu0, pu1, pn1, cn1)]   # around the pool shell
     for a_, c_, n0_, n1_ in deck:                                                    # stone retaining body
         box(a_, c_, n0_, n1_, PADZ - 0.3, ZD - 0.06, "limestone")
@@ -1532,6 +1532,7 @@ VIEWS = {
     "courtyard": dict(eye=(9.0, 42.0, 6.0), at=(17.6, 29.4, 0.5), lens=24),
     "aerial": dict(eye=(48.0, -24.0, 42.0), at=(12.0, 20.0, 0.0), lens=30),
     "raised": dict(eye=(34.0, 40.0, 14.0), at=(12.0, 25.0, 0.0), lens=24),
+    "lowcourt": dict(eye=(34.0, 46.0, 9.0), at=(14.0, 23.0, 0.0), lens=26),
 }
 
 
