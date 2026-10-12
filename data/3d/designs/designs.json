@@ -88,6 +88,50 @@
   ]
  },
  {
+  "id": "farmhouse_fp",
+  "name": "Modern Farmhouse — floor plan correction",
+  "file": "designs/farmhouse_fp.txt",
+  "note": "Raised-pool farmhouse matched to its floor plan (designs/farmhouse_fp_floorplan.png): 5 bedrooms, master suite extended over the rear roof as a gabled wing matching the pool house, every window in the plan is in the model. Exterior otherwise unchanged. Earthworks figures are still the original farmhouse's.",
+  "facts": [
+   [
+    "Lot area",
+    "≈1,093 m²"
+   ],
+   [
+    "Zoning",
+    "R1 General Residential"
+   ],
+   [
+    "House + garage footprint",
+    "418 m² (38%)"
+   ],
+   [
+    "Floor level",
+    "157.6 m AHD"
+   ],
+   [
+    "Earthworks depth",
+    "cut ≤2.8 m · fill ≤1.9 m"
+   ],
+   [
+    "Cut / fill volume",
+    "≈598 / 291 m³"
+   ],
+   [
+    "Net soil",
+    "≈307 m³ to remove"
+   ],
+   [
+    "Pool excavation",
+    "≈60 m³ extra"
+   ],
+   [
+    "Bushfire prone",
+    "rear half (vegetation buffer)"
+   ]
+  ]
+ },
+ {
   "id": "hill_country",
   "name": "Hill Country Stone",
   "file": "designs/hill_country.txt",
