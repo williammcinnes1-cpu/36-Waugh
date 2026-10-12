@@ -25,6 +25,7 @@ import cycles_render as cr  # noqa: E402
 from cycles_render import (ARC, GZ, PADZ, B, MATS, TEX, arc_n, box, card, cyl, drape, faces, poly, prism, ring, slab,  # noqa: E402
                            zg, light, bush, tree, WARM, srgb, img_mat, flat_mat, noisy_mat, seam_roof, thin_glass,
                            leaf_mat, terrain_mat, node_mat, obj_coords)
+import polish  # noqa: E402
 
 D3 = ROOT / "data" / "3d"
 LAY = json.loads((D3 / "house_massing.json").read_text())
@@ -665,7 +666,7 @@ def build_house():
     for w in (e1, e2):
         window_n(*w, eu1 - T, eu1, cols=1, rows=2, outward=1)
     ledge_n(en0, en1, eu1, 1, gaps=[e1[:2], e2[:2], (14.0, 16.5)])
-    box(eu1, eu1 + 0.3, 14.0, 16.5, GZ - 0.3, EAVE_E - 0.05, "limestone")   # stone panel breaks the long side wall
+    box(eu1, eu1 + 0.3, 14.0, 16.5, GZ - 0.3, EAVE_E - 0.45, "limestone")   # stone panel breaks the long side wall
     roof_n(en0, en1, eu0, eu1, EAVE_E, PITCH_E)
     dz = o * math.tan(PITCH_E)
     downpipe(eu1 + o + 0.1, en0 - o + 0.1, EAVE_E - dz - 0.1, eu1 + 0.1, en0 + 0.15, GZ)
@@ -680,7 +681,7 @@ def build_house():
     sl = (wn0 + 0.6, wn1 - 0.6, 0.0, 2.7)
     wall_n(wn0, wn1, wu1 - T, wu1, wing_bands(EAVE_W), [sl])
     window_n(*sl, wu1 - T, wu1, cols=5, rows=1, outward=1)
-    sw_ = [(23.6, 24.8, 1.1, 2.3), (27.4, 28.6, 1.1, 2.3)]
+    sw_ = [(23.2, 24.4, 1.1, 2.3), (26.4, 27.6, 1.1, 2.3)]
     wall_n(wn0, wn1, wu0, wu0 + T, wing_bands(EAVE_W), sw_)
     for w in sw_:
         window_n(*w, wu0, wu0 + T, cols=1, rows=2, outward=-1)
@@ -699,10 +700,10 @@ def build_house():
     room_light(wu0 + 0.5, wu1 - 0.5, wn0 + 0.5, wn1 - 0.5, EAVE_W, 1300)
     box(3.0, 7.6, 25.0, 26.0, 0, 0.42, "fabric")
     box(3.0, 7.6, 24.8, 25.05, 0, 0.8, "fabric")
-    box(3.4, 7.2, 26.4, 28.6, 0, 0.01, "rug")
-    box(4.6, 5.8, 27.0, 27.8, 0, 0.38, "walnut")
-    pendant(5.4, 28.6, 2.2, 40)
-    for nn in (22.6, 29.4):
+    box(3.4, 7.2, 26.0, 28.2, 0, 0.01, "rug")
+    box(4.6, 5.8, 26.6, 27.4, 0, 0.38, "walnut")
+    pendant(5.4, 27.6, 2.2, 40)
+    for nn in (22.6, 28.2):
         wall_lantern(wu1, nn, 1.8, outward_u=1, power=14)
 
     # --- GARAGE at street level under the east wing (door set back > 5.5 m); timber carriage door
@@ -786,12 +787,14 @@ def build_house():
     for x in (pu0 + 2.4, pu1 - 2.4):
         light("POINT", (x, pn0 + 0.15, PADZ - 0.9), 55, (0.55, 0.85, 1.0), size=0.05, name="pool")
     for x in (pu0 + 1.5, pu0 + 3.0, pu1 - 3.0, pu1 - 1.5):           # sun loungers on the north deck
-        box(x - 0.35, x + 0.35, pn1 + 0.6, pn1 + 1.6, PADZ + 0.05, PADZ + 0.3, "black")
-        box(x - 0.32, x + 0.32, pn1 + 0.62, pn1 + 1.58, PADZ + 0.3, PADZ + 0.38, "linen")
+        polish.lounger(x, pn1 + 0.55, PADZ + 0.05, math.pi / 2)
     box(12.0, 14.8, 22.0, 23.0, PADZ + 0.72, PADZ + 0.77, "walnut")
-    for x in (12.3, 13.4, 14.5):
-        for nn in (21.6, 23.4):
-            box(x - 0.2, x + 0.2, nn - 0.2, nn + 0.2, PADZ, PADZ + 0.45, "black")
+    for x in (12.0, 14.8):
+        for nn in (22.15, 22.85):
+            box(x - 0.04 if x < 13 else x - 0.12, x + 0.12 if x < 13 else x + 0.04, nn - 0.04, nn + 0.04, PADZ, PADZ + 0.72, "walnut")
+    for x in (12.5, 13.4, 14.3):
+        for nn, a_ in ((21.45, math.pi / 2), (23.55, -math.pi / 2)):
+            polish.dining_chair(x, nn, PADZ + 0.05, a_)
     for x, nn in ((10.3, 22.0), (20.9, 24.3)):
         topiary(x, nn, PADZ, h=1.3, r=0.32)
 
@@ -842,21 +845,45 @@ def build_house():
         wseg(s_st0, s_st1, PADZ - 0.3, z, -(nst - k) * 0.34, 0.3 if k == nst - 1 else -(nst - k - 1) * 0.34, "paving")
     for s in (s_st0 - 0.15, s_st1 + 0.15):
         path_light(ua + tu * s - nu * 0.3, na + tn * s - nn_ * 0.3, PADZ)
-    # fire pit + timber chairs on the flagstone circle
-    fx, fn = 12.0, upper_n(12.0) + 3.6
-    cyl((fx, fn, UPZ), (fx, fn, UPZ + 0.42), 0.75, 0.75, "limestone", 16)
-    disc(fx, fn, UPZ + 0.42, 0.75, "limestone")
-    disc(fx, fn, UPZ + 0.43, 0.5, "fire")
-    light("POINT", (fx, fn, UPZ + 0.75), 90, (1.0, 0.45, 0.15), size=0.3, name="pool_firepit")
-    for a in (0.6, 2.0, 3.6, 5.0):
-        cx, cn = fx + math.cos(a) * 1.65, fn + math.sin(a) * 1.65
-        dx_, dn_ = math.cos(a), math.sin(a)
-        tx_, tn_ = -dn_, dx_
-        box(cx - 0.3, cx + 0.3, cn - 0.3, cn + 0.3, UPZ + 0.05, UPZ + 0.4, "timber")
-        bx, bn_ = cx + dx_ * 0.32, cn + dn_ * 0.32
-        slab((bx + tx_ * 0.3, bn_ + tn_ * 0.3, UPZ + 0.4), (bx - tx_ * 0.3, bn_ - tn_ * 0.3, UPZ + 0.4),
-             (bx - tx_ * 0.3 + dx_ * 0.18, bn_ - tn_ * 0.3 + dn_ * 0.18, UPZ + 1.0), (bx + tx_ * 0.3 + dx_ * 0.18, bn_ + tn_ * 0.3 + dn_ * 0.18, UPZ + 1.0),
-             0.05, "timber")
+    # timber pergola with a built-in limestone seat on the small raised terrace (SW end), chairs round a fire bowl
+    pc = L.get("perg_u", 6.0)
+    s_c = (pc - ua) / tu
+
+    def T_(s, d):               # along-wall s, depth d into the terrace -> (u, n)
+        return (ua + tu * s + nu * d, na + tn * s + nn_ * d)
+    d0, d1 = 0.6, 3.0
+    for s in (s_c - 2.2, s_c + 2.2):
+        for d in (d0 + 0.1, d1 - 0.1):
+            u_, n_ = T_(s, d)
+            box(u_ - 0.09, u_ + 0.09, n_ - 0.09, n_ + 0.09, UPZ, UPZ + 2.55, "timber")
+    for d in (d0 + 0.1, d1 - 0.1):                       # beams along the wall
+        a_, b_ = T_(s_c - 2.6, d), T_(s_c + 2.6, d)
+        slab((a_[0], a_[1], UPZ + 2.55), (b_[0], b_[1], UPZ + 2.55), (b_[0] + nu * 0.1, b_[1] + nn_ * 0.1, UPZ + 2.55),
+             (a_[0] + nu * 0.1, a_[1] + nn_ * 0.1, UPZ + 2.55), 0.24, "timber")
+    for k in range(12):                                   # rafters across
+        s = s_c - 2.5 + k * 5.0 / 11
+        a_, b_ = T_(s, d0 - 0.3), T_(s, d1 + 0.3)
+        slab((a_[0], a_[1], UPZ + 2.79), (b_[0], b_[1], UPZ + 2.79), (b_[0] + tu * 0.06, b_[1] + tn * 0.06, UPZ + 2.79),
+             (a_[0] + tu * 0.06, a_[1] + tn * 0.06, UPZ + 2.79), 0.16, "timber")
+    q = [T_(s_c - 2.0, d1 - 0.55), T_(s_c + 2.0, d1 - 0.55), T_(s_c + 2.0, d1), T_(s_c - 2.0, d1)]
+    faces("limestone", [(u, n, UPZ) for u, n in q] + [(u, n, UPZ + 0.45) for u, n in q],
+          [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)])
+    q = [T_(s_c - 1.9, d1 - 0.5), T_(s_c + 1.9, d1 - 0.5), T_(s_c + 1.9, d1 - 0.05), T_(s_c - 1.9, d1 - 0.05)]
+    faces("oatmeal", [(u, n, UPZ + 0.45) for u, n in q] + [(u, n, UPZ + 0.55) for u, n in q],
+          [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)])
+    for k in range(4):                                    # back cushions
+        a_, b_ = T_(s_c - 1.85 + k * 0.95, d1 - 0.12), T_(s_c - 1.0 + k * 0.95, d1 - 0.12)
+        slab((a_[0], a_[1], UPZ + 0.55), (b_[0], b_[1], UPZ + 0.55), (b_[0], b_[1], UPZ + 1.0), (a_[0], a_[1], UPZ + 1.0), 0.14, "oatmeal")
+    fx, fn = T_(s_c, 1.55)
+    cyl((fx, fn, UPZ), (fx, fn, UPZ + 0.35), 0.42, 0.42, "limestone", 16)
+    disc(fx, fn, UPZ + 0.35, 0.42, "limestone")
+    disc(fx, fn, UPZ + 0.36, 0.28, "fire")
+    light("POINT", (fx, fn, UPZ + 0.7), 45, (1.0, 0.45, 0.15), size=0.25, name="pool_firepit")
+    ang = math.atan2(tn, tu)
+    for sd in (-1, 1):
+        cx, cn = T_(s_c + sd * 1.35, 1.2)
+        polish.outdoor_chair(cx, cn, UPZ + 0.05, ang + (math.pi if sd > 0 else 0.0) + sd * 0.35)
+    pendant(*T_(s_c, 1.8), UPZ + 1.75, 25)
 
     # --- boundary retaining walls along the levelled ground (cut: retain the neighbour's higher ground; fill: 0.9 m wall)
     pts = [tuple(p) for p in PAD_OUTLINE[:-1]]
@@ -900,7 +927,9 @@ def build_house():
     drape(-45, gu0 + 0.2, lambda u: arc_n(u, R - 3.75), lambda u: arc_n(u, R - 2.3), 0.1, "concrete", 80, 2)
     drape(gu1 + 0.6, 68, lambda u: arc_n(u, R - 3.75), lambda u: arc_n(u, R - 2.3), 0.1, "concrete", 60, 2)
     drape(gu0 + 0.2, gu1 + 0.6, lambda u: arc_n(u, R - 3.75), lambda u: gn0, 0.08, "aggregate", 12, 12)
-    drape(-1.5, gu0, lambda u: arc_n(u, R - 2.3), lambda u: 1.58, 0.06, "mulch", 40, 4)
+    drape(-1.5, gu0, lambda u: arc_n(u, R - 2.3), lambda u: 0.72, 0.05, "lawn", 40, 3)
+    drape(-1.5, gu0, lambda u: 0.75, lambda u: 1.58, 0.07, "mulch", 40, 2)
+    drape(-1.5, gu0, lambda u: 0.71, lambda u: 0.76, 0.09, "black", 40, 1)        # steel lawn edging
     drape(-45, -1.5, lambda u: arc_n(u, R - 2.3), lambda u: arc_n(u, R) + 1.0, 0.04, "lawn", 30, 2)
     drape(bnd_ne(0) + 0.6, 68, lambda u: arc_n(u, R - 2.3), lambda u: arc_n(u, R) + 1.0, 0.04, "lawn", 30, 2)
 
@@ -969,14 +998,18 @@ def build_garden():
         bush((gu1 + 0.75, nn, GZ + 0.75), rr(0.32, 0.4), "hedge" if int(nn * 10) % 3 == 0 else "hydrangea_pink", 16)
         bush((bnd_ne(nn) - 0.7, nn, GZ + 0.8), rr(0.4, 0.5), "shrub", 16)
     # verge garden: low grasses and box balls
-    for _ in range(55):
-        u = rr(-1.2, ab1 - 0.4)
+    for k in range(int((ab1 - 0.4 + 1.2) / 0.55)):
+        u = -1.2 + k * 0.55 + rr(-0.1, 0.1)
         if s0 - 0.8 < u < s1 + 0.8:
             continue
-        t = rr(0.2, 0.9)
-        nn = arc_n(u, ARC["r"] - 2.3) * (1 - t) + 1.5 * t
-        r = rr(0.25, 0.42)
-        bush((u, nn, zg(u, nn) + r * 0.6), r, "shrub" if rng.random() < 0.6 else "hedge", 16)
+        nn = rr(1.0, 1.3)
+        r = rr(0.28, 0.4)
+        if k % 4 == 0:
+            bush((u, nn, zg(u, nn) + r * 0.7), r, "hedge", 18)
+        elif k % 4 == 2:
+            bush((u, nn, zg(u, nn) + r * 0.8), r * 1.1, "shrub", 16)
+        else:
+            hydr(u, nn, zg(u, nn) + r * 0.8, r)
     # privacy hedges along both side boundaries (clear of the outdoor room and the garage strip)
     for k in range(40):
         n = 5.5 + k * 0.7
@@ -994,7 +1027,7 @@ def build_garden():
     (ua, na), (ub, nb) = LAY["upper_wall"][0], LAY["upper_wall"][-1]
     for k in range(int(math.hypot(ub - ua, nb - na) / 0.8)):
         u = ua + (ub - ua) * (k + 0.5) / int(math.hypot(ub - ua, nb - na) / 0.8)
-        if 13.0 < u < 16.4:
+        if 13.0 < u < 16.4 or L.get("perg_u", 6.0) - 2.9 < u < L.get("perg_u", 6.0) + 2.9:
             continue
         hydr(u, upper_n(u) + 0.75, UPZ + 0.4)
     lot = LAY["lot_outline"]
@@ -1005,7 +1038,7 @@ def build_garden():
         if not pip(u, n, [tuple(p) for p in PAD_OUTLINE[:-1]]):
             continue
         bush((u, n, UPZ + 0.35), rr(0.32, 0.42), "shrub" if k % 3 else "hydrangea_lime", 14)
-    for u, nn in ((1.5, 33.9), (24.5, 40.4), (19.0, 39.6)):
+    for u, nn in ((0.6, 33.6), (24.0, 40.3), (27.2, 41.6)):
         tree((u, nn, UPZ), rr(3.4, 4.0), rr(1.4, 1.7), "olive", "darkbark", stems=3, cards_per=20, crown_flat=0.6)
     # courtyard olives either side of the outdoor room
     tree((21.6, 32.6, PADZ), 3.8, 1.6, "olive", "darkbark", stems=3, cards_per=22, crown_flat=0.6)
@@ -1082,58 +1115,18 @@ def fix_terrain_under_pool():
     pu0, pu1, pn0, pn1 = L["pool"]
     for v in ob.data.vertices:
         u, n, z = v.co
-        if pu0 - 0.3 < u < pu1 + 0.3 and pn0 - 0.3 < n < pn1 + 0.3:
+        if pu0 - 1.5 < u < pu1 + 1.5 and pn0 - 1.5 < n < pn1 + 1.5:
             v.co.z = PADZ - 1.8
         elif 3.7 < u < 14.3 and 27.2 < n < 31.3:
             v.co.z = zg(u, n)
     ob.data.update()
 
 
-def golden_sky():
-    """warm golden-hour gradient with soft lit clouds for camera rays (lighting still from the physical sky + sun)"""
-    nt = bpy.context.scene.world.node_tree
-    ramp = [n for n in nt.nodes if n.type == "VALTORGB"][0]
-    els = sorted(ramp.color_ramp.elements, key=lambda e: e.position)
-    els[0].color = (*srgb("#f3bf7e"), 1)
-    els[1].position = 0.2
-    els[1].color = (*srgb("#f2d2a8"), 1)
-    els[2].position = 0.75
-    els[2].color = (*srgb("#8fa9cc"), 1)
-    for n_ in nt.nodes:                 # world Generated z is sin(elevation): spread the gradient over 0..30 degrees
-        if n_.type == "MAP_RANGE":
-            n_.inputs["From Min"].default_value = 0.0
-            n_.inputs["From Max"].default_value = 0.5
-    tc = [n for n in nt.nodes if n.type == "TEX_COORD"][0]
-    mp = nt.nodes.new("ShaderNodeMapping")
-    mp.inputs["Scale"].default_value = (2.2, 2.2, 7.0)
-    nt.links.new(tc.outputs["Generated"], mp.inputs["Vector"])
-    nz = nt.nodes.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 3.0; nz.inputs["Detail"].default_value = 7
-    nz.inputs["Roughness"].default_value = 0.6
-    nt.links.new(mp.outputs["Vector"], nz.inputs["Vector"])
-    cm = nt.nodes.new("ShaderNodeMapRange")
-    cm.inputs["From Min"].default_value = 0.52; cm.inputs["From Max"].default_value = 0.72
-    nt.links.new(nz.outputs["Fac"], cm.inputs["Value"])
-    sep = [n for n in nt.nodes if n.type == "SEPXYZ"][0]
-    hm_ = nt.nodes.new("ShaderNodeMapRange")
-    hm_.inputs["From Min"].default_value = 0.03; hm_.inputs["From Max"].default_value = 0.15
-    hm_.inputs["To Min"].default_value = 0.0; hm_.inputs["To Max"].default_value = 0.75
-    nt.links.new(sep.outputs["Z"], hm_.inputs["Value"])
-    mul = nt.nodes.new("ShaderNodeMath"); mul.operation = "MULTIPLY"
-    nt.links.new(cm.outputs["Result"], mul.inputs[0]); nt.links.new(hm_.outputs["Result"], mul.inputs[1])
-    mix = nt.nodes.new("ShaderNodeMix"); mix.data_type = "RGBA"
-    nt.links.new(mul.outputs[0], mix.inputs["Factor"])
-    nt.links.new(ramp.outputs["Color"], mix.inputs["A"])
-    mix.inputs["B"].default_value = (*srgb("#ffd6a3"), 1)
-    cam_bg = [n for n in nt.nodes if n.type == "BACKGROUND" and n.name != "Background"][0]
-    nt.links.new(mix.outputs["Result"], cam_bg.inputs["Color"])
-    bg = nt.nodes["Background"]
-    bg.inputs["Strength"].default_value = 0.55
-
-
 VIEWS = {
-    "street": dict(eye=(10.8, -16.0, 1.7), at=(11.6, 14.0, 3.9), lens=24),
-    "courtyard": dict(eye=(11.5, 45.5, 7.0), at=(14.0, 25.5, 0.6), lens=21),
+    "street": dict(eye=(10.8, -16.0, 1.7), at=(11.6, 14.0, 3.9), lens=26),
+    "courtyard": dict(eye=(21.5, 40.2, 6.2), at=(9.5, 23.5, -0.5), lens=22),
     "aerial": dict(eye=(46.0, -22.0, 40.0), at=(12.0, 22.0, 0.0), lens=28),
+    "corner": dict(eye=(30.0, -6.0, 9.0), at=(12.0, 14.0, 4.0), lens=30),
 }
 
 
@@ -1141,9 +1134,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--view", default="street")
     ap.add_argument("--scale", type=int, default=50)
-    ap.add_argument("--samples", type=int, default=32)
+    ap.add_argument("--samples", type=int, default=128)
     ap.add_argument("--out", default=str(ROOT / "designs" / "sage_stone_street.png"))
-    ap.add_argument("--exposure", type=float, default=0.95)
+    ap.add_argument("--exposure", type=float, default=1.02)
     ap.add_argument("--export-glb", default="")
     a = ap.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:])
 
@@ -1192,6 +1185,7 @@ def main():
         "fire": flat_mat("fire", (1, 0.4, 0.1), 0.5, emit=(1.0, 0.42, 0.12), strength=40),
         "terrain": terrain_mat("terrain", True), "grass": terrain_mat("grass", False),
     })
+    polish.chair_mats()
     w = MATS["water"] = bpy.data.materials.new("water")
     w.use_nodes = True
     bw = w.node_tree.nodes["Principled BSDF"]
@@ -1204,33 +1198,23 @@ def main():
     fix_terrain_under_pool()
     build_house()
     build_garden()
+    polish.neighbours()
+    polish.backdrop_trees()
+    polish.street_tree(-6.0, arc_n(-6.0, ARC["r"] - 1.1))
+    polish.street_tree(27.5, arc_n(27.5, ARC["r"] - 1.1), h=8.0, r=3.0)
     cr.flush()
     if a.export_glb:
         export_glb(a.export_glb)
         print("exported", a.export_glb)
         return
     cr.VIEWS.update(VIEWS)
-    sun_az = {"street": 232.0, "courtyard": 290.0}.get(a.view, 260.0)       # low golden-hour sun from the W/SW
-    cr.setup_world_and_camera(a.view, 10.0, sun_az, a.exposure)
-    golden_sky()
-
-    sc = bpy.context.scene
-    sc.render.engine = "CYCLES"
-    sc.cycles.device = "CPU"
-    sc.cycles.samples = a.samples
-    sc.cycles.use_adaptive_sampling = True
-    sc.cycles.adaptive_threshold = 0.03
-    sc.cycles.use_denoising = True
-    sc.cycles.max_bounces = 5
-    sc.cycles.transparent_max_bounces = 16
-    sc.cycles.caustics_reflective = False
-    sc.cycles.caustics_refractive = False
-    sc.render.resolution_x, sc.render.resolution_y = 1414, 913
-    sc.render.resolution_percentage = a.scale
-    sc.render.filepath = a.out
-    sc.render.image_settings.file_format = "PNG"
-    bpy.ops.render.render(write_still=True)
-    print("wrote", a.out)
+    sun_az = {"street": 192.0, "courtyard": 312.0}.get(a.view, 260.0)       # low golden-hour sun from the W/SW
+    cr.setup_world_and_camera(a.view, float(__import__("os").environ.get("SUN_EL", 10.0)), sun_az, a.exposure)
+    polish.golden_sky(float(__import__("os").environ.get("SKY", 0.4)))
+    polish.sun(float(__import__("os").environ.get("SUN_E", 8.0)))
+    polish.fill_light(a.view, float(__import__("os").environ.get("FILL", 0.45)))
+    polish.bevel(("clad", "sage", "limestone", "coping", "black", "timber", "paving", "slab"))
+    polish.render(a)
 
 
 if __name__ == "__main__":
