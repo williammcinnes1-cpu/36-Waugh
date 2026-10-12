@@ -172,6 +172,50 @@
   ]
  },
  {
+  "id": "french_provincial",
+  "name": "French Provincial (rough concept)",
+  "file": "designs/french_provincial.txt",
+  "note": "Rough concept: symmetrical two-storey limestone-quoined pavilion with a steep slate hip roof, one arched front door, shutters and single-storey hipped wings; same garage, pool and courtyard plan as the farmhouse. Ridge ≈8.1 m above natural ground.",
+  "facts": [
+   [
+    "Lot area",
+    "≈1,093 m²"
+   ],
+   [
+    "Zoning",
+    "R1 General Residential"
+   ],
+   [
+    "House + garage footprint",
+    "418 m² (38%)"
+   ],
+   [
+    "Floor level",
+    "157.6 m AHD"
+   ],
+   [
+    "Earthworks depth",
+    "cut ≤2.8 m · fill ≤1.9 m"
+   ],
+   [
+    "Cut / fill volume",
+    "≈598 / 291 m³"
+   ],
+   [
+    "Net soil",
+    "≈307 m³ to remove"
+   ],
+   [
+    "Pool excavation",
+    "≈60 m³ extra"
+   ],
+   [
+    "Bushfire prone",
+    "rear half (vegetation buffer)"
+   ]
+  ]
+ },
+ {
   "id": "mediterranean",
   "name": "Modern Mediterranean (rough concept)",
   "file": "designs/mediterranean.txt",
