@@ -986,9 +986,13 @@ def build_house():
     # --- the long west family wing: big sliding doors east onto the courtyard, glazed gable north
     EW = UF + 2.6                                   # pool house on the upper-floor level, joined to the view storey
     box(ru0, ru1, un1, rn1, UF - 0.25, UF, "floor")
-    sl = (rn0 + 1.4, rn1 - 0.6, UF, UF + 2.4)
-    wall_n(un1, rn1, ru1 - T, ru1, 0, EW, [sl], "clad")
-    window_n(*sl, ru1 - T, ru1, cols=7, rows=1, outward=1)   # pool house bifolds onto the terrace
+    sl = (rn0 + 4.0, rn1 - 0.6, UF, UF + 2.4)                                 # bifolds face the pool, stairs straight down
+    w_s = (rn0 + 1.2, rn0 + 3.4, UF + 0.9, UF + 2.4)                           # window (was doors) at the south end
+    w_hi = (un1 + 1.1, rn0 - 0.6, UF + 0.9, UF + 2.3)                          # window in the wall above the lower roof
+    wall_n(un1, rn1, ru1 - T, ru1, 0, EW, [sl, w_s, w_hi], "clad")
+    window_n(*sl, ru1 - T, ru1, cols=5, rows=1, outward=1)   # pool house bifolds
+    window_n(*w_s, ru1 - T, ru1, cols=2, rows=1, outward=1)
+    window_n(*w_hi, ru1 - T, ru1, cols=2, rows=1, outward=1)
     wall_n(un1, rn1, ru0, ru0 + T, 0, EW, [(rn0 + 4.4, rn0 + 5.6, UF + 1.0, UF + 2.0)], "clad")
     window_n(rn0 + 4.4, rn0 + 5.6, UF + 1.0, UF + 2.0, ru0, ru0 + T, cols=1, rows=1, outward=-1)
     wall_u(ru0, ru1, rn1 - T, rn1, 0, EW, [], "clad")                        # solid north end (client: no low glass)
@@ -1116,15 +1120,14 @@ def build_house():
     for x in ((pu0 + pu1) / 2 - 0.8, (pu0 + pu1) / 2 + 0.8):
         cyl((x, pn1 + 1.6, ZD + 0.03), (x, pn1 + 1.6, ZD + 0.6), 0.32, 0.4, "limestone", 12)
         bush((x, pn1 + 1.6, ZD + 1.0), 0.42, "hedge", 18)
-    # pool-house terrace at the upper-floor level outside the bifolds, glass balustrade, steps DOWN to the pool deck
-    tn0, tn1, tu1 = rn0 + 1.8, rn1 + 0.3, ru1 + 2.4
-    box(ru1, tu1, tn0, tn1, ZD - 0.06, UF - 0.06, "limestone")
-    box(ru1, tu1 + 0.04, tn0 - 0.04, tn1, UF - 0.08, UF + 0.03, "paving")
-    box(tu1 - 0.03, tu1, tn0, tn1 - 1.6, UF + 0.03, UF + 1.05, "glass")
-    box(ru1, tu1, tn0, tn0 + 0.03, UF + 0.03, UF + 1.05, "glass")
-    ns_ = 7
-    for k in range(1, ns_):                       # steps run north from the terrace down to the deck lawn
-        box(tu1 - 1.6, tu1, tn1, tn1 + (ns_ - k) * 0.3, ZD - 0.06, ZD + (UF - ZD) * k / ns_, "flagstone")
+    # small landing outside the bifolds, then stairs across their whole width straight down towards the pool
+    tn0, tn1 = sl[0] - 0.3, sl[1] + 0.3
+    box(ru1, ru1 + 0.7, tn0, tn1, ZD - 0.06, UF + 0.03, "flagstone")
+    ns_ = 6
+    for k in range(1, ns_):
+        box(ru1 + 0.7, ru1 + 0.7 + (ns_ - k) * 0.32, tn0, tn1, ZD - 0.06, ZD + (UF - ZD) * k / ns_, "flagstone")
+    for nn in (tn0 - 0.25, tn1):                                               # low stone cheeks either side
+        slab((ru1, nn, UF + 0.03), (ru1 + 0.7, nn, UF + 0.03), (ru1 + 0.7 + ns_ * 0.32, nn, ZD), (ru1, nn, ZD), 0.25, "limestone")
     # the whole rear of the lot (north of the deck, and the strip along the NE fence) at the same raised level
     def _clip(poly_, a_, b_):                   # keep the part left of the directed edge a_->b_
         out = []
@@ -1533,6 +1536,7 @@ VIEWS = {
     "aerial": dict(eye=(48.0, -24.0, 42.0), at=(12.0, 20.0, 0.0), lens=30),
     "raised": dict(eye=(34.0, 40.0, 14.0), at=(12.0, 25.0, 0.0), lens=24),
     "lowcourt": dict(eye=(34.0, 46.0, 9.0), at=(14.0, 23.0, 0.0), lens=26),
+    "poolhouse": dict(eye=(22.0, 36.0, 6.0), at=(9.0, 26.0, 2.6), lens=26),
 }
 
 
