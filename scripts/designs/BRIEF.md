@@ -102,3 +102,15 @@ This is the shared brief for every house concept. Each designer gets a separate 
 - Garage and closest-dwelling setbacks, and the minimum side and rear setbacks.
 - Which rooms get the street and east views.
 - Known flaws.
+
+## QA lessons from the first round (apply these)
+- **Sky:** copy `golden_sky()` from scripts/designs/sage_stone_cycles.py (about line 1092) and use a 10° sun elevation. The flat grey skies scored badly.
+- **No bare paddock:** don't let any render show the lot floating in bare brown pasture.
+  - Model the two neighbour houses: 625 NE is single-storey white render with a terracotta hip roof; 623 SW has a tile roof.
+  - Add trees and hedges along the boundaries.
+  - Keep courtyard cameras close: an eye at about 6 m height inside the lot, looking at the pool and glazing with a 24 mm lens.
+- **Lawn and water levels:** lawn triangles must not cover the pool. Cut lawn around the pool and paved areas, or keep the water above the lawn level.
+- **No flat beige ground** in the street foreground. Use lawn, gravel or mulch beds with planting.
+- **Final renders:** use about 96 samples. 32 left the trees and stone blotchy.
+- **Roofs:** charcoal about #3a3d40, roughness about 0.45, not pure black. Exposure about 1.0–1.05.
+- **Garage in frame:** keep the garage in the street view; aim the camera so the NE end isn't cut off.
