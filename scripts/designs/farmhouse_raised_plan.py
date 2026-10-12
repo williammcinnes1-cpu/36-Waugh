@@ -94,6 +94,31 @@ class Panel:
         self.d.text(self.p(u, n), txt, font=F(size), fill=fill, anchor="mm")
 
 
+def bed(pn, u0, u1, n0, n1, head):
+    """bed outline with pillows at the head end ('u0', 'u1', 'n0', 'n1')"""
+    pn.rect(u0, u1, n0, n1, (240, 236, 228), (70, 70, 70), 2)
+    if head in ("u0", "u1"):
+        a, b = (u0 + 0.08, u0 + 0.5) if head == "u0" else (u1 - 0.5, u1 - 0.08)
+        m = (n0 + n1) / 2
+        pn.rect(a, b, n0 + 0.1, m - 0.05, (255, 255, 255), (120, 120, 120), 1)
+        pn.rect(a, b, m + 0.05, n1 - 0.1, (255, 255, 255), (120, 120, 120), 1)
+    else:
+        a, b = (n0 + 0.08, n0 + 0.5) if head == "n0" else (n1 - 0.5, n1 - 0.08)
+        m = (u0 + u1) / 2
+        pn.rect(u0 + 0.1, m - 0.05, a, b, (255, 255, 255), (120, 120, 120), 1)
+        pn.rect(m + 0.05, u1 - 0.1, a, b, (255, 255, 255), (120, 120, 120), 1)
+
+
+def robe(pn, u0, u1, n0, n1):
+    """built-in robe: hatched 0.6 m deep joinery"""
+    pn.rect(u0, u1, n0, n1, (228, 222, 210), (70, 70, 70), 2)
+    a, b = pn.p(u0, n1), pn.p(u1, n0)
+    for x in range(int(a[0]), int(b[0]) + int(b[1] - a[1]), 7):
+        pn.d.line([(max(a[0], x - (b[1] - a[1])), min(b[1], a[1] + x - a[0])), (min(x, b[0]), a[1] + max(0, x - b[0]))],
+                  fill=(170, 160, 145), width=1)
+    pn.note((u0 + u1) / 2, (n0 + n1) / 2, "BIR", 9, (60, 60, 60))
+
+
 def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     W, H = 3 * PW + 4 * 30 + 330, PH + 200
     sheet = Image.new("RGB", (W, H), (255, 255, 255))
@@ -142,7 +167,7 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     p.outdoor("Verandah", 0.8, 15.4, 7.0, 9.4, (230, 222, 205), 12)
     rooms = [("Study", 1, 5.2, 9.4, 14.0), ("Entry", 5.2, 10.0, 9.4, 14.0, ROOM, True, 14, (6.6, 11.2)), ("Media", 10.0, 15.6, 9.4, 14.0),
              ("Living", 1, 8.0, 14.0, 21.4), ("Kitchen / dining", 8.0, 15.6, 14.0, 21.4),
-             ("Bed 5 / guest", 15.6, 22.8, 7.5, 11.3), ("Mud", 15.6, 18.5, 11.3, 15.5, ROOM, True, 11, (17.05, 14.65)),
+             ("Bed 5", 15.6, 22.8, 7.5, 11.3, ROOM, True, 13, (18.2, 9.2)), ("Mud", 15.6, 18.5, 11.3, 15.5, ROOM, True, 11, (17.05, 14.65)),
              ("Rumpus", 15.6, 22.8, 18.0, 22.6), ("Gym\n(under pool house)", 1, 9, 21.4, 26.8),
              ("Cellar / store", 1, 9, 26.8, 32.3)]
     for r in rooms:
@@ -151,6 +176,8 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
                      ("WC", 18.5, 20.5, 15.5, 18.0), ("Store", 20.5, 22.8, 15.5, 18.0)):
         p.room(name, *r, fill=WET, size=11)
     p.room("Pool\nplant", 9.0, 10.6, 23.2, 26.8, fill=WET, area=False, size=10)
+    robe(p, 19.8, 22.8, 10.7, 11.3)                                              # bed 5: BIR on the ensuite wall
+    bed(p, 22.8 - 2.03, 22.8, 9.2 - 1.53/2, 9.2 + 1.53/2, "u1")                   # queen
     p.stair(8.0, 10.0, 11.5, 14.0, "n", "UP")
     p.stair(16.4, 18.4, 11.3, 13.8, "n", "DN")
     p.rect(10.0, 13.6, 15.4, 16.3, (215, 210, 200), (90, 90, 90), 1)   # island
@@ -169,19 +196,29 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     q = Panel(sheet, xs[2], oy, "Upper floor & pool house", f"RL {UPPER:.1f} m AHD · pool deck below at {DECK:.2f}")
     for r in ((1, 15.6, 9.4, 21.4), (15.6, 22.8, 7.5, 22.6)):
         q.rect(*r, None, (190, 190, 190), 1)
-    q.poly([(9, 17.5), (22.8, 17.5), (22.8, 23.05), (9, 23.05)], ROOFC)
-    q.note(16.0, 20.3, "roof below (lowered rear roof)", 12, (80, 80, 80))
+    q.poly([(9, 17.5), (15.6, 17.5), (15.6, 20.5), (22.8, 20.5), (22.8, 23.05), (9, 23.05)], ROOFC)
+    q.note(12.3, 20.6, "roof below", 12, (80, 80, 80))
     q.rect(12.5, 22.5, 28.5, 32.0, (190, 220, 235), (120, 160, 190), 1)
     q.note(17.5, 30.25, f"pool (deck RL {DECK:.2f})", 12, (60, 90, 120))
-    rooms = [("Bed 3", 1, 4.6, 11.5, 16.0), ("Bed 4", 4.6, 8.0, 11.5, 16.0), ("Bed 2", 10.0, 13.2, 11.5, 16.0),
-             ("Master bed\n(views E + street)", 15.6, 22.8, 11.5, 15.0), ("Hall", 1, 15.6, 16.0, 17.5),
+    rooms = [("Bed 3", 1, 4.6, 11.5, 16.0, ROOM, False, 12, (2.8, 14.8)), ("Bed 4", 4.6, 8.0, 11.5, 16.0, ROOM, False, 12, (6.3, 14.8)), ("Bed 2", 10.0, 13.2, 11.5, 16.0, ROOM, False, 12, (11.6, 14.8)),
+             ("Master", 15.6, 22.8, 11.5, 15.5, ROOM, True, 12, (17.0, 12.5)), ("Hall", 1, 15.6, 16.0, 17.5),
              ("Bar /\nkitchenette", 1, 5.5, 17.5, 21.4), ("Pool house  8.0 × 10.9 m", 1, 9, 21.4, 32.3, ROOM, True, 12, (5.0, 27.2))]
     for r in rooms:
         q.room(*r)
-    for name, *r in (("Bath", 13.2, 15.6, 11.5, 16.0), ("WIR", 15.6, 19.2, 15.0, 17.5),
-                     ("Ensuite", 19.2, 22.8, 15.0, 17.5), ("Shower\n/ WC", 5.5, 9.0, 17.5, 21.4)):
+    for name, *r in (("Bath", 13.2, 15.6, 11.5, 16.0), ("WIR", 15.6, 19.2, 15.5, 20.5),
+                     ("Ensuite", 19.2, 22.8, 15.5, 20.5), ("Shower\n/ WC", 5.5, 9.0, 17.5, 21.4)):
         q.room(name, *r, fill=WET, size=11)
     q.stair(8.0, 10.0, 11.5, 14.0, "n", "DN")
+    # bedrooms 2-4: built-in robes and a queen bed each (1.53 × 2.03 m); master: king (1.83 × 2.03 m) and WIR
+    for u, a in ((2.8, 16), (6.3, 15), (11.6, 14)):
+        q.note(u, 11.95, f"{a} m²", 11, (30, 30, 30))
+    robe(q, 1.0, 3.6, 15.4, 16.0)
+    bed(q, 1.0, 1.0 + 2.03, 13.4 - 1.53/2, 13.4 + 1.53/2, "u0")
+    robe(q, 4.6, 7.0, 15.4, 16.0)
+    bed(q, 8.0 - 2.03, 8.0, 13.4 - 1.53/2, 13.4 + 1.53/2, "u1")
+    robe(q, 11.2, 13.2, 15.4, 16.0)
+    bed(q, 13.2 - 2.03, 13.2, 13.45 - 1.53/2, 13.45 + 1.53/2, "u1")
+    bed(q, 19.2 - 0.915, 19.2 + 0.915, 15.5 - 2.03, 15.5, "n1")
     # pool house furniture at true size: 10-seat timber table, couch facing a TV on the west wall
     TIM, FAB, LN = (196, 160, 115), (175, 180, 190), (70, 70, 70)
     q.rect(3.4, 6.6, 28.9, 30.0, TIM, LN, 2)                                     # table 3.2 × 1.1 m
@@ -199,8 +236,11 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     q.note(2.0, 25.6, "TV", 10)
     q.note(5.4, 26.2, "couch 2.8 m", 10)
     q.rect(8.0, 10.0, 14.0, 16.0, ROOM, (40, 40, 40), 3)
-    for r in ((1, 22.8, 11.5, 17.5), (1, 9, 17.5, 32.3)):
+    for r in ((1, 22.8, 11.5, 17.5), (1, 9, 17.5, 32.3), (15.6, 22.8, 17.5, 20.5)):
         q.envelope(*r)
+    q.room("WIR", 15.6, 19.2, 15.5, 20.5, fill=WET, size=11)                       # suite runs through: redraw over the old wall line
+    q.room("Ensuite", 19.2, 22.8, 15.5, 20.5, fill=WET, size=11)
+    q.d.line([q.p(15.6, 17.5), q.p(15.6, 20.5), q.p(22.8, 20.5), q.p(22.8, 15.4)], fill=(15, 15, 15), width=6)
     q.rect(9.0, 9.7, 25.1, 32.0, (225, 215, 195), (90, 90, 90), 1)
     q.stair(9.7, 11.62, 28.3, 32.0, "u", "DN")
     q.note(12.6, 27.4, "stairs down to pool", 10)
@@ -208,7 +248,8 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     q.note(7.6, 28.6, "bifolds", 10, (40, 100, 160))
     q.glass_u(22.6, 24.8, 9.0)
     q.glass_u(18.6, 20.8, 9.0)
-    q.glass_u(11.8, 15.0, 22.8, 7)
+    q.glass_u(11.8, 15.2, 22.8, 7)
+    q.glass_u(17.0, 19.0, 22.8, 4)
     q.glass_n(1.8, 3.8, 11.5, 6)
     q.glass_n(5.3, 7.3, 11.5, 6)
     q.glass_n(16.4, 22.0, 11.5, 6)
@@ -234,7 +275,7 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     d.text((sx, oy - 52), "5 bedrooms", font=F(24, True), fill=(25, 25, 25))
     d.multiline_text((sx, oy - 24), "Master + beds 2–4 upstairs,\nbed 5 / guest on the ground floor", font=F(13), fill=(70, 70, 70))
     gf = 14.6 * 12.0 + 7.2 * 15.1 + 8 * 10.9
-    up = 21.8 * 6.0 + 8 * 14.8
+    up = 21.8 * 6.0 + 8 * 14.8 + 7.2 * 3.0
     y0 = oy + 14
     lines = [("Levels (m AHD)", True), (f"Garage floor  {GARAGE:.2f}", False), (f"Lower courtyard  {PADZ:.2f}", False),
              (f"Ground floor  {FFL:.2f}", False), (f"Pool deck / rear lawn  {DECK:.2f}", False),
@@ -242,7 +283,7 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
              ("Approx. floor areas", True), (f"Ground floor  ≈{gf:.0f} m²", False), ("  incl. gym & cellar under", False),
              ("  the pool house", False), (f"Upper + pool house  ≈{up:.0f} m²", False), ("Garage  ≈31 m² + store 11 m²", False),
              (f"Total (excl. garage)  ≈{gf + up:.0f} m²", False), ("", False),
-             ("Key", True), ("Blue: glazing", False), ("Brown: doors", False), ("Hatched: stairs", False),
+             ("Key", True), ("Blue: glazing", False), ("Brown: doors", False), ("Hatched: stairs", False), ("BIR: built-in robe (0.6 m deep)", False), ("Beds drawn to scale: queen", False), ("  1.53 × 2.03 m, master king", False),
              ("Red: lot boundary", False), ("", False), ("Notes", True),
              ("Walls, openings and levels follow", False), ("the 3D model; the room layout", False),
              ("inside them is a concept only.", False), ("Gross areas to external walls.", False),
