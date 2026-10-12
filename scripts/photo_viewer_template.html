@@ -1,0 +1,352 @@
+<title>36 Waugh Street Farmhouse</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: full-bleed 3D scene, floating glass chips (title, site facts, camera and time controls); one dusk-friendly look for both host themes */
+:root {
+  --ink: #f5f1ea;
+  --ink-dim: #c9c2b6;
+  --chip: rgba(20, 24, 28, 0.66);
+  --chip-strong: rgba(20, 24, 28, 0.86);
+  --accent: #e8b36a;
+  --lot: #ff5a4e;
+  --fire: #f39a3a;
+  --bg: #11161a;
+  --font-display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; overflow: hidden; }
+#stage { position: relative; width: 100%; height: 100%; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.chip { position: absolute; background: var(--chip); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 10px; padding: 10px 14px; }
+.title { top: 14px; left: 16px; max-width: calc(100% - 32px); }
+.title h1 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.3rem; }
+.title p { margin: 2px 0 0; color: var(--ink-dim); font-size: 0.8rem; }
+.facts { top: 14px; right: 16px; width: 270px; max-width: calc(100% - 32px); }
+.facts summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.8rem; color: var(--ink-dim); list-style: none; }
+.facts summary::-webkit-details-marker { display: none; }
+.facts summary::after { content: " +"; }
+.facts[open] summary::after { content: " −"; }
+.facts dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; margin: 10px 0 0; }
+.facts dt { color: var(--ink-dim); font-size: 0.82rem; }
+.facts dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.82rem; }
+.facts p { margin: 10px 0 0; color: var(--ink-dim); font-size: 0.72rem; line-height: 1.45; }
+.dock { bottom: 16px; left: 16px; right: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 8px 12px; max-width: 980px; }
+.group { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.label { font-family: var(--font-display); font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; font-size: 0.72rem; color: var(--ink-dim); margin-right: 4px; }
+button { font: 500 0.82rem var(--font-body); color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+button:hover { border-color: rgba(245, 241, 234, 0.35); }
+button[aria-pressed="true"] { background: var(--ink); color: #15191d; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.time { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 220px; }
+.time input { flex: 1; min-width: 120px; accent-color: var(--accent); }
+.time span { font-variant-numeric: tabular-nums; font-size: 0.8rem; color: var(--ink-dim); min-width: 92px; }
+.toggles { display: flex; gap: 12px; flex-wrap: wrap; }
+.toggles label { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; cursor: pointer; }
+.sw { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.credit { position: absolute; right: 16px; bottom: 92px; font-size: 0.68rem; color: var(--ink-dim); background: var(--chip); padding: 4px 8px; border-radius: 6px; max-width: 60%; text-align: right; }
+.loading { top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.compass { position: absolute; top: 74px; left: 16px; width: 40px; height: 40px; border-radius: 50%; background: var(--chip); display: grid; place-items: center; }
+@media (max-width: 720px) {
+  .facts { top: auto; bottom: 150px; right: 16px; width: auto; left: 16px; }
+  .credit { bottom: 136px; max-width: calc(100% - 32px); }
+}
+</style>
+
+<div id="stage">
+  <div class="chip title">
+    <h1>36 Waugh Street, Griffith</h1>
+    <p>Option B · modern farmhouse · Lot 624 DP821594 · indicative</p>
+  </div>
+  <div class="compass" aria-label="North"><svg viewBox="0 0 24 24" width="26" height="26" id="compass"><polygon points="12,2 16,17 12,14 8,17" fill="var(--lot)"/><text x="12" y="23.5" text-anchor="middle" font-size="6" fill="var(--ink)" font-family="sans-serif">N</text></svg></div>
+  <details class="chip facts" id="facts">
+    <summary>Site and design</summary>
+    <dl>
+      <dt>Lot area</dt><dd>≈1,093 m²</dd>
+      <dt>Zoning</dt><dd>R1 General Residential</dd>
+      <dt>House + garage footprint</dt><dd>__FOOT__ m² (__COVER__)</dd>
+      <dt>Floor level</dt><dd>__FFL__ m AHD</dd>
+      <dt>Earthworks</dt><dd>cut ≤__CUT__ m · fill ≤__FILL__ m</dd>
+      <dt>Bushfire prone</dt><dd>rear half (vegetation buffer)</dd>
+    </dl>
+    <p>Small windows to the street for privacy; living rooms and pool open to a north courtyard. Terrain from the NSW 5 m elevation grid; eucalypts placed from the aerial photo. Concept only: not checked against the Griffith DCP or bushfire construction rules.</p>
+  </details>
+  <div class="chip dock">
+    <div class="group" role="group" aria-label="Camera views">
+      <span class="label">View</span>
+      <button type="button" data-view="street" aria-pressed="true">Front gate</button>
+      <button type="button" data-view="street_wide">Street</button>
+      <button type="button" data-view="courtyard">Courtyard</button>
+      <button type="button" data-view="aerial">Aerial</button>
+    </div>
+    <div class="time">
+      <label class="label" for="tod">Light</label>
+      <input type="range" id="tod" min="0" max="1" step="0.01" value="0.72">
+      <span id="todLabel">Golden hour</span>
+    </div>
+    <div class="toggles">
+      <label><input type="checkbox" id="tLot"><span class="sw" style="background:var(--lot)"></span>Lot boundary</label>
+      <label><input type="checkbox" id="tFire"><span class="sw" style="background:var(--fire)"></span>Bushfire buffer</label>
+    </div>
+  </div>
+  <div class="credit">Terrain and imagery © State of New South Wales (Spatial Services), CC BY 4.0</div>
+  <div class="chip loading" id="loading">Loading the site… <span id="pct"></span></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/objects/Sky.js"></script>
+<script>
+const DATA = __DATA__;
+const LEAF = "data:image/png;base64,__LEAF__";
+
+(function () {
+  THREE.ColorManagement.legacyMode = false;
+  let seed = 7;
+  const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const rr = (a, b) => a + (b - a) * rnd();
+  // Blender/street frame (u, n, z) -> three.js (x = u, y = z, z = -n)
+  const P = (u, n, z) => new THREE.Vector3(u, z, -n);
+
+  const stage = document.getElementById("stage");
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.prepend(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.3, 8000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 3; controls.maxDistance = 700;
+
+  // ---------- sky, sun, environment ----------
+  const sky = new THREE.Sky(); sky.scale.setScalar(20000); scene.add(sky);
+  const envSky = new THREE.Sky(); envSky.scale.setScalar(1000);
+  const envScene = new THREE.Scene(); envScene.add(envSky);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  let envRT = null;
+  const hemi = new THREE.HemisphereLight(0xc8daf0, 0x6e5c46, 0.45); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+  sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
+  Object.assign(sun.shadow.camera, { left: -48, right: 48, top: 48, bottom: -48, near: 10, far: 600 });
+  sun.shadow.bias = -0.00025; sun.shadow.normalBias = 0.04;
+  sun.shadow.camera.updateProjectionMatrix();
+  scene.add(sun, sun.target);
+  const centre = P(12, 20, 0);
+  sun.target.position.copy(centre);
+  const north = new THREE.Vector3(DATA.north[0], 0, -DATA.north[1]).normalize();
+  const east = new THREE.Vector3(DATA.east[0], 0, -DATA.east[1]).normalize();
+  const lamps = [], emissives = [];
+  const smooth = (a, b, x) => { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); };
+  function setTime(t) {
+    // 0 = midday, 0.72 = golden hour, 1 = dusk with the garden lights on
+    const el = THREE.MathUtils.lerp(58, -1.5, Math.pow(t, 1.25)), az = THREE.MathUtils.lerp(330, 252, t);
+    const e = THREE.MathUtils.degToRad(el), a = THREE.MathUtils.degToRad(az);
+    const dir = north.clone().multiplyScalar(Math.cos(a) * Math.cos(e)).add(east.clone().multiplyScalar(Math.sin(a) * Math.cos(e))).add(new THREE.Vector3(0, Math.sin(e), 0));
+    [sky, envSky].forEach(s => {
+      const u = s.material.uniforms;
+      u.sunPosition.value.copy(dir); u.turbidity.value = 5.5; u.rayleigh.value = THREE.MathUtils.lerp(1.2, 2.6, t);
+      u.mieCoefficient.value = 0.004; u.mieDirectionalG.value = 0.82;
+    });
+    sun.position.copy(centre).addScaledVector(dir, 260);
+    const warm = smooth(0.35, 0.9, t);
+    sun.color.setRGB(1.0, THREE.MathUtils.lerp(0.97, 0.62, warm), THREE.MathUtils.lerp(0.92, 0.34, warm));
+    sun.intensity = THREE.MathUtils.lerp(2.6, 1.9, warm) * smooth(-2, 4, el);
+    hemi.intensity = THREE.MathUtils.lerp(0.55, 0.22, smooth(0.6, 1, t));
+    renderer.toneMappingExposure = THREE.MathUtils.lerp(0.48, 0.95, smooth(0.4, 1, t));
+    const night = smooth(0.78, 1.0, t);
+    lamps.forEach(l => { l.intensity = l.userData.base * night; });
+    emissives.forEach(m => { m.emissiveIntensity = 0.15 + 3.5 * night; });
+    if (envRT) envRT.dispose();
+    envRT = pmrem.fromScene(envScene, 0.04);
+    scene.environment = envRT.texture;
+    document.getElementById("todLabel").textContent = t < 0.3 ? "Midday" : t < 0.6 ? "Afternoon" : t < 0.86 ? "Golden hour" : "Dusk";
+    requestRender();
+  }
+
+  // ---------- small procedural detail textures (world UVs: 1 unit = 4 m) ----------
+  function canvasTex(size, paint, rep) {
+    const c = document.createElement("canvas"); c.width = c.height = size; paint(c.getContext("2d"), size);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy(); if (rep) t.repeat.set(rep, rep); return t;
+  }
+  const speck = (g, s, n, cols) => { for (let i = 0; i < n; i++) { g.fillStyle = cols[i % cols.length]; g.fillRect(rnd() * s, rnd() * s, 1 + rnd() * 2, 1 + rnd() * 2); } };
+  const lawnTex = canvasTex(512, (g, s) => { g.fillStyle = "#5c7a35"; g.fillRect(0, 0, s, s); for (let i = 0; i < 26000; i++) { const l = rr(-28, 30); g.strokeStyle = `rgb(${86 + l},${118 + l},${52 + l * 0.6})`; const x = rnd() * s, y = rnd() * s; g.beginPath(); g.moveTo(x, y); g.lineTo(x + rr(-2, 2), y - rr(3, 8)); g.stroke(); } }, 6);
+  const asphaltTex = canvasTex(512, (g, s) => { g.fillStyle = "#38393b"; g.fillRect(0, 0, s, s); speck(g, s, 40000, ["#2a2b2d", "#505052", "#46464a", "#5e5d5b"]); }, 4);
+  const concreteTex = canvasTex(512, (g, s) => { g.fillStyle = "#bdb7ac"; g.fillRect(0, 0, s, s); speck(g, s, 20000, ["#b0aa9f", "#cbc5ba", "#a59f95"]); g.fillStyle = "rgba(80,74,66,0.45)"; g.fillRect(0, 0, s, 2); g.fillRect(0, s / 2, s, 2); }, 1);
+  const mulchTex = canvasTex(512, (g, s) => { g.fillStyle = "#4b3b2e"; g.fillRect(0, 0, s, s); speck(g, s, 30000, ["#3a2d22", "#6b5644", "#5a4636", "#2c221a"]); }, 3);
+  const seamTex = canvasTex(512, (g, s) => { g.fillStyle = "#2c2e31"; g.fillRect(0, 0, s, s); for (let x = 0; x < s; x += 57.6) { g.fillStyle = "rgba(160,166,172,0.5)"; g.fillRect(x, 0, 3, s); g.fillStyle = "rgba(0,0,0,0.45)"; g.fillRect(x + 3, 0, 4, s); } }, 1);
+  const grassTex = canvasTex(256, (g, s) => { g.fillStyle = "#808080"; g.fillRect(0, 0, s, s); for (let i = 0; i < 6000; i++) { const l = rr(55, 205); g.strokeStyle = `rgb(${l},${l},${l})`; const x = rnd() * s, y = rnd() * s; g.beginPath(); g.moveTo(x, y); g.lineTo(x + rr(-3, 3), y - rr(4, 12)); g.stroke(); } });
+  grassTex.encoding = THREE.LinearEncoding;
+
+  // ---------- load the scene ----------
+  const LEAVES = new Set(["hedge", "hydrangea", "olive", "shrub", "tussock"]);
+  const FLAT = new Set(["terrain", "grass", "asphalt", "kerb", "concrete", "lawn", "mulch", "aggregate"]);
+  let terrainMesh = null;
+  const loader = new THREE.GLTFLoader();
+  // the model ships base64-encoded in a .txt next to the page (the host does not serve .glb)
+  function loadModel(onLoad, onProgress, onError) {
+    fetch("farmhouse_scene.txt").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); onProgress({ loaded: 1, total: 2 }); return r.text(); })
+      .then(t => { const bin = atob(t.trim()), buf = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i); loader.parse(buf.buffer, "", onLoad, onError); })
+      .catch(onError);
+  }
+  loadModel(gltf => {
+    gltf.scene.traverse(o => {
+      if (o.isLight) { o.userData.base = o.name.startsWith("pool") ? 6 : o.name.startsWith("lantern") ? 5 : 3.5; o.distance = 9; o.decay = 2; o.castShadow = false; lamps.push(o); return; }
+      if (!o.isMesh) return;
+      const name = (o.material.name || "").replace(/\.\d+$/, "");
+      o.castShadow = !FLAT.has(name) && name !== "water";
+      o.receiveShadow = true;
+      let m = o.material;
+      if (LEAVES.has(name)) {
+        m.alphaTest = 0.5; m.transparent = false; m.side = THREE.DoubleSide; m.roughness = 0.75;
+        o.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: m.map, alphaTest: 0.5 });
+      } else if (name === "glass") {
+        o.material = new THREE.MeshPhysicalMaterial({ color: "#1d272b", metalness: 0.25, roughness: 0.02, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 1.7 });
+      } else if (name === "water") {
+        o.material = new THREE.MeshPhysicalMaterial({ color: "#2f9fc9", roughness: 0.03, metalness: 0.05, transparent: true, opacity: 0.88, envMapIntensity: 1.4, emissive: new THREE.Color("#0a5e86"), emissiveIntensity: 0.25 });
+        emissives.push(o.material);
+      } else if (name === "bulb") {
+        m.emissive = new THREE.Color(1.0, 0.72, 0.42); m.emissiveIntensity = 0.2; emissives.push(m);
+      } else if (name === "lawn") { m.map = lawnTex; m.color.set("#ffffff"); m.roughness = 0.95;
+      } else if (name === "asphalt") { m.map = asphaltTex; m.color.set("#ffffff");
+      } else if (name === "concrete" || name === "kerb") { m.map = concreteTex; m.color.set("#ffffff");
+      } else if (name === "mulch") { m.map = mulchTex; m.color.set("#ffffff");
+      } else if (name === "roof_x" || name === "roof_y") { m.map = seamTex; m.color.set("#ffffff"); m.metalness = 0.55; m.roughness = 0.4;
+        if (name === "roof_y") { m.map = seamTex.clone(); m.map.rotation = Math.PI / 2; m.map.needsUpdate = true; }
+      } else if (name === "terrain" || name === "grass") {
+        terrainMesh = name === "terrain" ? o : terrainMesh;
+        m.roughness = 1; m.metalness = 0;
+        m.color = name === "terrain" ? new THREE.Color(1.05, 0.92, 0.7) : new THREE.Color("#a8874a");
+        m.onBeforeCompile = sh => {
+          sh.uniforms.detail = { value: grassTex };
+          sh.fragmentShader = "uniform sampler2D detail;\n" + sh.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>
+            #ifdef USE_UV
+            diffuseColor.rgb *= mix(0.8, 1.16, texture2D(detail, vUv * ${name === "terrain" ? "200.0" : "60.0"}).r);
+            #endif`);
+        };
+        if (name === "grass" && !m.map) { m.map = grassTex.clone(); m.map.encoding = THREE.LinearEncoding; m.map.repeat.set(20, 20); }
+      } else if (m.map) { m.map.anisotropy = renderer.capabilities.getMaxAnisotropy(); }
+      if (o.material.map) o.material.needsUpdate = true;
+    });
+    scene.add(gltf.scene);
+    scene.updateMatrixWorld(true);
+    buildTrees();
+    buildOverlays();
+    setTime(+document.getElementById("tod").value);
+    setView((location.hash || "#street").slice(1));
+    document.getElementById("loading").hidden = true;
+    document.body.dataset.ready = "1";
+  }, ev => { if (ev.total) document.getElementById("pct").textContent = Math.round(ev.loaded / ev.total * 100) + "%"; },
+  err => { document.getElementById("loading").textContent = "The site model could not be loaded. Reload the page to try again."; console.error(err); });
+
+  // ---------- ground height by ray cast ----------
+  const ray = new THREE.Raycaster();
+  function groundY(u, n) {
+    if (!terrainMesh) return 0;
+    ray.set(P(u, n, 400), new THREE.Vector3(0, -1, 0));
+    const hit = ray.intersectObject(terrainMesh, false)[0];
+    return hit ? hit.point.y : 0;
+  }
+
+  // ---------- eucalypts grown on the GPU from surveyed positions ----------
+  function buildTrees() {
+    const leafTex = new THREE.TextureLoader().load(LEAF, () => requestRender());
+    leafTex.encoding = THREE.sRGBEncoding;
+    const leafMat = new THREE.MeshStandardMaterial({ map: leafTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.8 });
+    const barkMat = new THREE.MeshStandardMaterial({ color: "#a39a88", roughness: 0.85 });
+    const trunkGeo = new THREE.CylinderGeometry(0.6, 1, 1, 6); trunkGeo.translate(0, 0.5, 0);
+    const cardGeo = new THREE.PlaneGeometry(1, 1);
+    const trunks = [], cards = [];
+    const up = new THREE.Vector3(0, 1, 0);
+    DATA.trees.forEach(([u, n, z, h, r]) => {
+      const base = P(u, n, z);
+      const lean = new THREE.Vector3(rr(-0.2, 0.2), 1, rr(-0.2, 0.2)).normalize();
+      trunks.push({ p: base, dir: lean, len: h * 0.55, w: r * 0.07, c: new THREE.Color("#a39a88").offsetHSL(0, 0, rr(-0.12, 0.05)) });
+      const subs = 3 + Math.floor(rnd() * 3);
+      for (let i = 0; i < subs; i++) {
+        const a = rr(0, 6.28), d = rr(r * 0.2, r * 0.85);
+        const c = base.clone().add(new THREE.Vector3(Math.cos(a) * d, h * rr(0.55, 0.9), Math.sin(a) * d));
+        const b0 = base.clone().addScaledVector(lean, h * 0.45);
+        trunks.push({ p: b0, dir: c.clone().sub(b0), len: c.distanceTo(b0), w: r * 0.035, c: new THREE.Color("#9c9282") });
+        const sr = r * rr(0.5, 0.72);
+        for (let q = 0; q < 13; q++) cards.push({ p: c.clone().add(new THREE.Vector3(rr(-sr, sr), rr(-sr * 0.5, sr * 0.5), rr(-sr, sr))), s: sr * rr(1.1, 1.5), c: new THREE.Color("#ffffff").offsetHSL(rr(-0.02, 0.02), 0, rr(-0.12, 0.04)) });
+      }
+    });
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), e = new THREE.Euler();
+    const ti = new THREE.InstancedMesh(trunkGeo, barkMat, trunks.length);
+    trunks.forEach((t, i) => { q.setFromUnitVectors(up, t.dir.clone().normalize()); s.set(t.w, t.len, t.w); m.compose(t.p, q, s); ti.setMatrixAt(i, m); ti.setColorAt(i, t.c); });
+    ti.castShadow = ti.receiveShadow = true; scene.add(ti);
+    const li = new THREE.InstancedMesh(cardGeo, leafMat, cards.length);
+    cards.forEach((t, i) => { e.set(rr(-1.3, 1.3), rr(0, 6.28), rr(-1.3, 1.3)); q.setFromEuler(e); s.set(t.s, t.s, t.s); m.compose(t.p, q, s); li.setMatrixAt(i, m); li.setColorAt(i, t.c); });
+    li.castShadow = true; li.receiveShadow = true;
+    li.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: leafTex, alphaTest: 0.5 });
+    scene.add(li);
+  }
+
+  // ---------- survey overlays draped on the ground ----------
+  const overlays = {};
+  function buildOverlays() {
+    const drape = (ring, color, radius) => {
+      const g = new THREE.Group();
+      const pts = [];
+      for (let i = 0; i < ring.length - 1; i++) {
+        const [u1, n1] = ring[i], [u2, n2] = ring[i + 1];
+        const k = Math.max(1, Math.ceil(Math.hypot(u2 - u1, n2 - n1) / 0.6));
+        for (let t = 0; t < k; t++) { const u = u1 + (u2 - u1) * t / k, n = n1 + (n2 - n1) * t / k; pts.push(new THREE.Vector3(u, groundY(u, n) + 0.35, -n)); }
+      }
+      const [ul, nl] = ring[ring.length - 1]; pts.push(new THREE.Vector3(ul, groundY(ul, nl) + 0.35, -nl));
+      const curve = new THREE.CatmullRomCurve3(pts, false, "catmullrom", 0);
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, pts.length, radius, 6, false), new THREE.MeshBasicMaterial({ color, toneMapped: false })));
+      return g;
+    };
+    overlays.lot = drape(DATA.lot, "#ff4a3d", 0.16);
+    overlays.fire = new THREE.Group(); DATA.bushfire.forEach(r => overlays.fire.add(drape(r, "#f39a3a", 0.13)));
+    Object.values(overlays).forEach(o => { o.visible = false; scene.add(o); });
+  }
+  document.getElementById("tLot").addEventListener("change", e => { overlays.lot.visible = e.target.checked; requestRender(); });
+  document.getElementById("tFire").addEventListener("change", e => { overlays.fire.visible = e.target.checked; requestRender(); });
+
+  // ---------- views ----------
+  function setView(name) {
+    const v = DATA.views[name] || DATA.views.street;
+    const [eu, en, above] = v.eye;
+    camera.position.copy(P(eu, en, 0)); camera.position.y = groundY(eu, en) + above;
+    controls.target.copy(P(...v.at));
+    camera.fov = v.fov; camera.updateProjectionMatrix(); controls.update();
+    document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === name)));
+    requestRender();
+  }
+  document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+  let todTimer = 0;
+  document.getElementById("tod").addEventListener("input", e => { clearTimeout(todTimer); const v = +e.target.value; todTimer = setTimeout(() => setTime(v), 30); });
+
+  // ---------- render on demand ----------
+  let dirty = true;
+  function requestRender() { dirty = true; }
+  const compass = document.getElementById("compass");
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); requestRender();
+  }
+  controls.addEventListener("change", requestRender);
+  new ResizeObserver(resize).observe(stage);
+  (function loop() {
+    requestAnimationFrame(loop);
+    if (controls.update()) dirty = true;
+    if (!dirty) return;
+    dirty = false;
+    renderer.render(scene, camera);
+    const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+    const ang = Math.atan2(fwd.clone().cross(north).y, fwd.dot(north));
+    compass.style.transform = `rotate(${-ang}rad)`;
+    document.body.dataset.frames = String((+document.body.dataset.frames || 0) + 1);
+  })();
+  resize();
+  setTime(+document.getElementById("tod").value);
+})();
+</script>

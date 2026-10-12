@@ -62,8 +62,8 @@ def main():
                 .replace("__RANGE__", f"{h.min():.0f}–{h.max():.0f} m AHD")
                 .replace("__FFL__", f"{hm['assumptions']['FFL']:.1f}")
                 .replace("__RIDGE__", f"{hm['assumptions']['ridge']:.1f}"))
-    (ROOT / "site_3d.html").write_text(html)
-    print("site_3d.html", round(len(html) / 1e6, 2), "MB")
+    (ROOT / "site_3d_survey.html").write_text(html)
+    print("site_3d_survey.html", round(len(html) / 1e6, 2), "MB")
 
 
 if __name__ == "__main__":
