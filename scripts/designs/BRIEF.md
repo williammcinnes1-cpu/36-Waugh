@@ -120,3 +120,8 @@ This is the shared brief for every house concept. Each designer gets a separate 
   - Example of the fault: the old farmhouse had a lean-to roof and a verandah roof sitting one above the other at the front, showing as two parallel roof lines.
 - **Where roofs meet,** use a proper valley or a junction against a wall with flashing. Don't let them intersect at random.
 - **Check before finishing:** look at the aerial view and at a close-up from a front corner. Verify every roof edge is a single, deliberate line, with no doubled fascias, overlapping eaves or roofs poking through walls.
+
+## Arch rule (client feedback: "these arches are just too much")
+- **At most one or two arched openings on the whole house,** for example the front door or one feature window.
+- **Everything else rectangular,** in black steel-framed glazing.
+- **Never** several arched gables or rows of arched windows. This applies even to the Mediterranean and French styles.
