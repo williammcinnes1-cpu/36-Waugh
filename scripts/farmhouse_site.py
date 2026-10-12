@@ -54,10 +54,39 @@ def to_frame(e, n):
 
 
 def pad_polygon():
-    """courtyard/house pad: the lot inset 0.4 m, from the street wall to pad_back, less the garage zone"""
-    big = frame_poly(-20, 45, 2.2, DESIGN["pad_back"])
+    """house, courtyard and rear-lawn pad: the whole lot inset 0.4 m behind the street wall, less the garage zone"""
+    big = frame_poly(-20, 45, 2.2, 60)
     g = DESIGN["garage"]
     return LOT.buffer(-0.4).intersection(big).difference(frame_poly(g[0], 40, -2, g[3]))
+
+
+def cut_fill_volumes(ground, dem, pool=None):
+    """bulk earthworks from the 1 m grids (m³, in-situ, no bulking): cut where the design is below natural ground,
+    fill where it is above, over the lot. Pool excavation is reported separately (shell depth 1.7 m)."""
+    lot = prep(LOT.buffer(0.3))
+    d = ground - dem
+    cut = fill = 0.0
+    for r in range(NCELL):
+        for c in range(NCELL):
+            if d[r, c] != 0 and lot.contains(Point(E0 + c + 0.5, N1 - r - 0.5)):
+                cut += max(-d[r, c], 0.0)
+                fill += max(d[r, c], 0.0)
+    pool_m3 = 0.0 if pool is None else (pool[1] - pool[0]) * (pool[3] - pool[2]) * 1.7
+    return round(cut), round(fill), round(pool_m3)
+
+
+def lawn_triangles(pad, stair):
+    """the level part of the pad (behind the front bank, clear of the front steps) as triangles in (u, n),
+    so lawn can run right out to the side and rear boundaries; paving and buildings sit just above it"""
+    from shapely.ops import triangulate
+    lawn = pad.intersection(frame_poly(-20, 45, BANK_TOP, 60)).difference(frame_poly(stair[0] - 0.4, stair[1] + 0.4, 0, stair[3]))
+    tris = []
+    for part in getattr(lawn, "geoms", [lawn]):
+        dense = part.segmentize(1.5)
+        for t in triangulate(dense):
+            if part.contains(t.centroid):
+                tris.append([[round(c, 3) for c in to_frame(*p)] for p in list(t.exterior.coords)[:3]])
+    return tris
 
 
 def designed_ground(dem):
@@ -94,6 +123,7 @@ def cmd_ground():
     data["ground_cm"] = np.round(ground[::-1] * 100).astype(int).ravel().tolist()
     data["design"] = "farmhouse"
     data["pad_outline"] = [[round(u, 3), round(n, 3)] for u, n in outline]
+    data["lawn_tris"] = lawn_triangles(pad, DESIGN["stair"])
     data["layout"] = DESIGN
     data["front"] = {"wall_top": WALL_TOP - FFL, "bank_top": BANK_TOP}
     cut = ground - dem
@@ -101,6 +131,9 @@ def cmd_ground():
     data["assumptions"] = {"FFL": FFL, "terrace": PAD, "garage_floor": GARAGE_FL, "ridge": FFL + 9.35,
                            "eave": FFL + 5.6, "footprint_m2": round(footprint), "coverage": round(footprint / LOT.area, 3),
                            "max_cut": round(float(-cut.min()), 2), "max_fill": round(float(cut.max()), 2)}
+    vc, vf, vp = cut_fill_volumes(ground, dem, DESIGN.get("pool"))
+    data["assumptions"].update({"cut_m3": vc, "fill_m3": vf, "pool_m3": vp})
+    print(f"earthworks: cut ≈{vc} m³, fill ≈{vf} m³, net {'export' if vc > vf else 'import'} ≈{abs(vc - vf)} m³; pool dig ≈{vp} m³")
     (OUT / "house_massing.json").write_text(json.dumps(data, separators=(",", ":")))
     print("pad area %.0f m2, footprint %.0f m2 (%.0f%%), cut %.2f, fill %.2f" % (
         pad.area, footprint, 100 * footprint / LOT.area, -cut.min(), cut.max()))

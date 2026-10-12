@@ -473,6 +473,10 @@ def build_house():
     box(ou0 + 1.9, ou0 + 2.6, on0 + 2.4, on1 - 2.4, zo, zo + 0.4, "walnut")
     cr_pendant((ou0 + ou1) / 2, (on0 + on1) / 2, zo + 2.4, 40)
 
+    # --- lawn over the whole level pad, out to the side and rear boundaries (paving and floors sit above it)
+    for tri in LAY.get("lawn_tris", []):
+        poly([(u, n, PADZ + 0.012) for u, n in tri], "lawn")
+
     # --- retaining walls along the pad edge (cut at the rear, fill at the sides), stepping to the ground
     pts = PAD_OUTLINE
     for (ua, na), (ub, nb) in zip(pts, pts[1:]):
