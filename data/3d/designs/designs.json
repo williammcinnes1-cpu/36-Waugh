@@ -42,5 +42,37 @@
     "rear half (vegetation buffer)"
    ]
   ]
+ },
+ {
+  "id": "wraparound",
+  "name": "Wraparound Farmhouse",
+  "file": "designs/wraparound.txt",
+  "note": "Whitewashed brick and white board-and-batten farmhouse with a deep verandah wrapping the SW corner, three dormers, a tall fieldstone chimney, an arched timber door and carriage garage doors under the east wing; the two-storey west wing's main suite looks over the street and east, while living rooms, pool and a fireplace outdoor room open to a north courtyard terraced out to every boundary.",
+  "facts": [
+   [
+    "Lot area",
+    "≈1,093 m²"
+   ],
+   [
+    "Zoning",
+    "R1 General Residential"
+   ],
+   [
+    "House + garage footprint",
+    "355 m² (32%)"
+   ],
+   [
+    "Floor level",
+    "157.6 m AHD"
+   ],
+   [
+    "Earthworks",
+    "cut ≤2.4 m · fill ≤1.9 m"
+   ],
+   [
+    "Bushfire prone",
+    "rear half (vegetation buffer)"
+   ]
+  ]
  }
 ]
