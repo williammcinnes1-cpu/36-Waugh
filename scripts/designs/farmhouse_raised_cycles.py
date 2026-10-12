@@ -1123,11 +1123,27 @@ def build_house():
     # small landing outside the bifolds, then stairs across their whole width straight down towards the pool
     tn0, tn1 = sl[0] - 0.3, sl[1] + 0.3
     box(ru1, ru1 + 0.7, tn0, tn1, ZD - 0.06, UF + 0.03, "flagstone")
+    st0, st1 = max(tn0, pn0 - 0.2), min(tn1, pn1 + 0.2)                      # shorter flight, square on to the pool's end
     ns_ = 6
     for k in range(1, ns_):
-        box(ru1 + 0.7, ru1 + 0.7 + (ns_ - k) * 0.32, tn0, tn1, ZD - 0.06, ZD + (UF - ZD) * k / ns_, "flagstone")
-    for nn in (tn0 - 0.25, tn1):                                               # low stone cheeks either side
-        slab((ru1, nn, UF + 0.03), (ru1 + 0.7, nn, UF + 0.03), (ru1 + 0.7 + ns_ * 0.32, nn, ZD), (ru1, nn, ZD), 0.25, "limestone")
+        box(ru1 + 0.7, ru1 + 0.7 + (ns_ - k) * 0.32, st0, st1, ZD - 0.06, ZD + (UF - ZD) * k / ns_, "flagstone")
+    for nn in (st0 - 0.25, st1):                                               # low stone cheeks either side
+        slab((ru1 + 0.7, nn, UF + 0.03), (ru1 + 0.7, nn, UF + 0.03), (ru1 + 0.7 + ns_ * 0.32, nn, ZD), (ru1 + 0.7, nn, ZD), 0.25, "limestone")
+    box(ru1 + 0.67, ru1 + 0.7, tn0, st0 - 0.25, UF + 0.03, UF + 1.05, "glass")    # balustrade on the rest of the landing
+    # pool pump shed in the stone base under the pool house window: louvred timber door to the lower courtyard
+    pn_ = rn0 + 1.8
+    box(ru1 + 0.2, ru1 + 1.4, pn_ - 0.06, pn_ + 0.01, PADZ + 0.03, PADZ + 1.6, "black")
+    for k in range(9):
+        z = PADZ + 0.15 + k * 0.16
+        box(ru1 + 0.28, ru1 + 1.32, pn_ - 0.1, pn_ - 0.05, z, z + 0.09, "timber")
+    # outdoor kitchen / BBQ built against the deck's front wall in the lower courtyard
+    bu0, bu1 = 18.4, 22.4
+    box(bu0, bu1, dn0 - 0.7, dn0, PADZ + 0.03, PADZ + 0.88, "limestone")
+    box(bu0 - 0.03, bu1 + 0.03, dn0 - 0.74, dn0, PADZ + 0.88, PADZ + 0.94, "coping")
+    box(19.6, 20.6, dn0 - 0.62, dn0 - 0.08, PADZ + 0.94, PADZ + 1.18, "black")                 # BBQ
+    slab((19.6, dn0 - 0.08, PADZ + 1.18), (20.6, dn0 - 0.08, PADZ + 1.18), (20.6, dn0 - 0.25, PADZ + 1.5), (19.6, dn0 - 0.25, PADZ + 1.5), 0.03, "black")
+    for x in (18.9, 21.4):
+        box(x - 0.3, x + 0.3, dn0 - 0.73, dn0 - 0.7, PADZ + 0.1, PADZ + 0.8, "timber")       # cupboard doors
     # the whole rear of the lot (north of the deck, and the strip along the NE fence) at the same raised level
     def _clip(poly_, a_, b_):                   # keep the part left of the directed edge a_->b_
         out = []
@@ -1537,6 +1553,7 @@ VIEWS = {
     "raised": dict(eye=(34.0, 40.0, 14.0), at=(12.0, 25.0, 0.0), lens=24),
     "lowcourt": dict(eye=(34.0, 46.0, 9.0), at=(14.0, 23.0, 0.0), lens=26),
     "poolhouse": dict(eye=(22.0, 36.0, 6.0), at=(9.0, 26.0, 2.6), lens=26),
+    "bbq": dict(eye=(11.5, 21.9, 1.6), at=(20.0, 26.5, 0.7), lens=20),
 }
 
 
