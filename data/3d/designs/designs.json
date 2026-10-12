@@ -44,6 +44,38 @@
   ]
  },
  {
+  "id": "hill_country",
+  "name": "Hill Country Stone",
+  "file": "designs/hill_country.txt",
+  "note": "Pale rough limestone gables with black steel arched windows and a long low standing-seam roof around a north pool courtyard, with a street-level garage under the east wing, an attic main suite with street and east views, and terraced gardens out to every boundary.",
+  "facts": [
+   [
+    "Lot area",
+    "≈1,093 m²"
+   ],
+   [
+    "Zoning",
+    "R1 General Residential"
+   ],
+   [
+    "House + garage footprint",
+    "375 m² (34%)"
+   ],
+   [
+    "Floor level",
+    "157.6 m AHD"
+   ],
+   [
+    "Earthworks",
+    "cut ≤2.8 m · fill ≤2.2 m"
+   ],
+   [
+    "Bushfire prone",
+    "rear half (vegetation buffer)"
+   ]
+  ]
+ },
+ {
   "id": "wraparound",
   "name": "Wraparound Farmhouse",
   "file": "designs/wraparound.txt",

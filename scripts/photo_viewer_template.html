@@ -41,6 +41,9 @@ button[aria-pressed="true"] { background: var(--ink); color: #15191d; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 select { font: 500 0.82rem var(--font-body); color: var(--ink); background: rgba(245, 241, 234, 0.08); border: 1px solid rgba(245, 241, 234, 0.3); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
 select option { color: #15191d; }
+#fade { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; opacity: 0; transition: opacity 0.7s ease; }
+.busy { position: absolute; top: 74px; left: 64px; font-size: 0.75rem; color: var(--ink-dim); background: var(--chip); border-radius: 6px; padding: 4px 8px; }
+.step { padding: 6px 9px; font-size: 0.9rem; line-height: 1; }
 select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .time { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 220px; }
 .time input { flex: 1; min-width: 120px; accent-color: var(--accent); }
@@ -72,7 +75,9 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   <div class="chip dock">
     <div class="group">
       <label class="label" for="design">Design</label>
+      <button type="button" class="step" id="prevD" aria-label="Previous design">‹</button>
       <select id="design"></select>
+      <button type="button" class="step" id="nextD" aria-label="Next design">›</button>
     </div>
     <div class="group" role="group" aria-label="Camera views">
       <span class="label">View</span>
@@ -92,6 +97,8 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     </div>
   </div>
   <div class="credit">Terrain and imagery © State of New South Wales (Spatial Services), CC BY 4.0</div>
+  <img id="fade" alt="">
+  <div class="busy" id="busy" hidden>Preparing design…</div>
   <div class="chip loading" id="loading">Loading the site… <span id="pct"></span></div>
 </div>
 
@@ -192,15 +199,22 @@ const LEAF = "data:image/png;base64,__LEAF__";
   // each design's model ships base64-encoded in a .txt next to the page (the host does not serve .glb)
   const designs = {};
   let current = null, treesBuilt = false;
+  const buffers = {};  // id -> Promise<ArrayBuffer>, filled by background prefetch
+  function fetchBuffer(id) {
+    if (!buffers[id]) {
+      const meta = DATA.designs.find(x => x.id === id);
+      buffers[id] = fetch(meta.file).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+        .then(t => { const bin = atob(t.trim()), buf = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i); return buf.buffer; });
+      buffers[id].catch(() => delete buffers[id]);
+    }
+    return buffers[id];
+  }
   function fetchDesign(id) {
     const meta = DATA.designs.find(x => x.id === id);
-    return fetch(meta.file).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
-      .then(t => new Promise((res, rej) => {
-        const bin = atob(t.trim()), buf = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-        loader.parse(buf.buffer, "", res, rej);
-      }))
-      .then(gltf => prepare(gltf, meta));
+    return fetchBuffer(id).then(buf => new Promise((res, rej) => loader.parse(buf, "", res, rej))).then(gltf => prepare(gltf, meta));
+  }
+  function prefetchAll() {  // one at a time, in drop-down order, so the first switch is instant
+    DATA.designs.reduce((p, x) => p.then(() => fetchBuffer(x.id)).catch(() => {}), Promise.resolve());
   }
   function prepare(gltf, meta) {
     const d = { meta, root: gltf.scene, lamps: [], emissives: [], terrain: null };
@@ -244,13 +258,20 @@ const LEAF = "data:image/png;base64,__LEAF__";
     });
     return d;
   }
+  let switching = null, pending = null;
+  const fadeImg = document.getElementById("fade");
   function showDesign(id) {
     const sel = document.getElementById("design");
-    sel.value = id; sel.disabled = true;
-    const load = document.getElementById("loading");
-    load.hidden = false; load.firstChild.textContent = "Loading the design… ";
-    const got = designs[id] ? Promise.resolve(designs[id]) : fetchDesign(id).then(d => (designs[id] = d));
-    got.then(d => {
+    sel.value = id;
+    if (switching) { pending = id; return; }  // queue the latest choice while one is loading
+    const first = !document.body.dataset.ready;
+    const load = document.getElementById("loading"), busy = document.getElementById("busy");
+    if (first) { load.hidden = false; load.firstChild.textContent = "Loading the design… "; } else busy.hidden = false;
+    switching = (designs[id] ? Promise.resolve(designs[id]) : fetchDesign(id).then(d => (designs[id] = d))).then(d => {
+      if (!first) {  // freeze the current frame on screen, swap underneath, then fade the snapshot away
+        renderer.render(scene, camera);
+        fadeImg.style.transition = "none"; fadeImg.src = renderer.domElement.toDataURL("image/jpeg", 0.92); fadeImg.style.opacity = "1";
+      }
       if (current) scene.remove(current.root);
       current = d; scene.add(d.root); scene.updateMatrixWorld(true);
       terrainMesh = d.terrain; lamps = d.lamps; emissives = d.emissives;
@@ -260,12 +281,34 @@ const LEAF = "data:image/png;base64,__LEAF__";
       document.getElementById("factsList").innerHTML = d.meta.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
       document.getElementById("factsNote").textContent = d.meta.note;
       setTime(+document.getElementById("tod").value);
-      if (!document.body.dataset.ready) setView((location.hash || "#street").slice(1));
-      load.hidden = true; sel.disabled = false;
+      renderer.compile(scene, camera);
+      if (first) setView((location.hash || "#street").slice(1));
+      renderer.render(scene, camera);
+      requestAnimationFrame(() => requestAnimationFrame(() => { fadeImg.style.transition = "opacity 0.7s ease"; fadeImg.style.opacity = "0"; }));
+      load.hidden = true; busy.hidden = true;
       document.body.dataset.ready = "1"; document.body.dataset.design = id;
       requestRender();
-    }).catch(err => { load.textContent = "That design could not be loaded. Reload the page to try again."; sel.disabled = false; console.error(err); });
+      if (first) setTimeout(prefetchAll, 400);
+    }).catch(err => {
+      if (first) load.textContent = "That design could not be loaded. Reload the page to try again.";
+      else { busy.textContent = "That design could not be loaded. Try again."; setTimeout(() => { busy.hidden = true; busy.textContent = "Preparing design…"; }, 3000); }
+      console.error(err);
+    }).finally(() => {
+      switching = null;
+      if (pending && pending !== (current && current.meta.id)) { const n = pending; pending = null; showDesign(n); } else pending = null;
+    });
   }
+  function step(dir) {
+    const ids = DATA.designs.map(x => x.id), i = ids.indexOf(document.getElementById("design").value);
+    showDesign(ids[(i + dir + ids.length) % ids.length]);
+  }
+  document.getElementById("prevD").addEventListener("click", () => step(-1));
+  document.getElementById("nextD").addEventListener("click", () => step(1));
+  window.addEventListener("keydown", e => {
+    if (e.target.closest && e.target.closest("input, select, textarea")) return;
+    if (e.key === "ArrowRight" || e.key === "]") step(1);
+    if (e.key === "ArrowLeft" || e.key === "[") step(-1);
+  });
   const sel = document.getElementById("design");
   DATA.designs.forEach(x => { const o = document.createElement("option"); o.value = x.id; o.textContent = x.name; sel.appendChild(o); });
   sel.addEventListener("change", () => showDesign(sel.value));
