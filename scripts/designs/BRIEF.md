@@ -133,6 +133,7 @@ This is the shared brief for every house concept. Each designer gets a separate 
 - **Keep MOST of the yard sunken:** the courtyard, pool and main lawn stay at pad level, cut into the slope. The rear and side retaining walls plus fences then screen it from the neighbours and give privacy.
 - **Don't raise the main lawn** up to natural ground level.
 
-## Rear wing rule (client: "this side of the house took up too much, keep it shorter")
-- **Keep wings that run back into the north yard short,** about 8–10 m deep beyond the main body at most. The courtyard and lawn between the house and the small raised rear garden should feel generous.
-- **Don't let a side wing run most of the way to the rear boundary.**
+## Rear wing rule (client feedback, refined)
+- **A long, low, single-storey wing along a side boundary is fine.** The client approved the farmhouse's west family wing with its glass onto the courtyard.
+- **What NOT to do:** let a big, tall gabled wing (like hill_country's arched-gable west wing) push deep into the north yard and crowd the courtyard and the raised rear garden.
+- **If a wing reaches back into the yard,** keep it low with a modest roof, and keep generous lawn and courtyard between it and the raised rear garden.
