@@ -1,0 +1,324 @@
+<title>36 Waugh Street Terrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-height 3D viewport with a narrow survey-sheet side panel; stacks under the model on phones */
+:root {
+  --bg: #eef0ed;
+  --panel: #f8f9f7;
+  --fg: #1f2622;
+  --muted: #5d6862;
+  --rule: #cfd5d0;
+  --lot: #d7261e;
+  --fire: #e07b10;
+  --c2: #2f9a4b;
+  --sky-top: #c9d6dc;
+  --sky-bottom: #eef0ed;
+  --font-display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151a18; --panel: #1c2220; --fg: #e3e8e4; --muted: #9aa69f; --rule: #333d38;
+    --lot: #ff4d42; --fire: #f39a3a; --c2: #4cc46c; --sky-top: #0f1416; --sky-bottom: #222a28;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151a18; --panel: #1c2220; --fg: #e3e8e4; --muted: #9aa69f; --rule: #333d38;
+  --lot: #ff4d42; --fire: #f39a3a; --c2: #4cc46c; --sky-top: #0f1416; --sky-bottom: #222a28;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 320px; height: 100%; }
+.stage { position: relative; min-width: 0; background: linear-gradient(var(--sky-top), var(--sky-bottom)); overflow: hidden; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.panel { background: var(--panel); border-left: 1px solid var(--rule); overflow-y: auto; padding-block: 20px; padding-inline: 20px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: 1.6rem; line-height: 1.1; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: 0.86rem; }
+.label { font-family: var(--font-display); font-weight: 600; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+dl.facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; font-family: var(--font-data); font-size: 0.82rem; font-variant-numeric: tabular-nums; text-align: right; }
+.control { display: flex; flex-direction: column; gap: 6px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.val { font-family: var(--font-data); font-size: 0.82rem; }
+input[type="range"] { width: 100%; accent-color: var(--lot); }
+.toggles { display: flex; flex-direction: column; gap: 8px; }
+.toggles label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.swatch { width: 18px; height: 4px; border-radius: 2px; flex: none; }
+button { font: 500 0.86rem var(--font-body); color: var(--fg); background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--lot); outline-offset: 2px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.note { color: var(--muted); font-size: 0.78rem; line-height: 1.5; margin: 0; }
+.note strong { color: var(--fg); font-weight: 600; }
+.tag { position: absolute; transform: translate(-50%, -130%); font-family: var(--font-data); font-size: 12px; padding: 2px 6px; border-radius: 4px; background: rgba(15, 20, 18, 0.78); color: #fff; white-space: nowrap; pointer-events: none; }
+.tag.street { background: rgba(255, 255, 255, 0.85); color: #222; font-family: var(--font-display); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.north { position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; border-radius: 50%; background: var(--panel); border: 1px solid var(--rule); display: grid; place-items: center; }
+.north svg { width: 26px; height: 26px; }
+.hint { position: absolute; left: 14px; bottom: 12px; font-size: 0.78rem; color: var(--fg); background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 4px 8px; opacity: 0.9; }
+.credit { position: absolute; right: 14px; bottom: 12px; font-size: 0.7rem; color: var(--fg); background: var(--panel); border-radius: 4px; padding: 3px 6px; opacity: 0.85; max-width: calc(100% - 28px); }
+@media (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: 62vh auto; height: auto; }
+  .panel { border-left: 0; border-top: 1px solid var(--rule); overflow: visible; }
+  .hint { display: none; }
+}
+</style>
+
+<div class="app">
+  <div class="stage" id="stage">
+    <div class="north" aria-label="North arrow"><svg viewBox="0 0 26 26" id="northSvg"><polygon points="13,2 18,20 13,16 8,20" fill="var(--lot)"/><text x="13" y="25.5" text-anchor="middle" font-size="7" font-family="sans-serif" fill="var(--fg)">N</text></svg></div>
+    <div class="hint">Drag to orbit · right-drag to pan · scroll to zoom</div>
+    <div class="credit">© State of New South Wales (Spatial Services), CC BY 4.0 · imagery Feb 2014</div>
+  </div>
+  <aside class="panel">
+    <div>
+      <h1>36 Waugh Street, Griffith</h1>
+      <p class="sub">Lot 624 DP821594 · 240 × 240 m terrain block, GDA2020 MGA Zone 55</p>
+    </div>
+    <section>
+      <p class="label">On the lot</p>
+      <dl class="facts">
+        <dt>Area</dt><dd>≈1,093 m²</dd>
+        <dt>Highest corner (W)</dt><dd>≈160.3 m AHD</dd>
+        <dt>Lowest corner (E)</dt><dd>≈154.5 m AHD</dd>
+        <dt>Fall across lot</dt><dd>≈5.7 m</dd>
+        <dt>Average slope</dt><dd>≈14% to ESE</dd>
+        <dt>Block range</dt><dd>__RANGE__</dd>
+      </dl>
+    </section>
+    <section class="control">
+      <div class="row"><label class="label" for="exag" style="margin:0">Vertical exaggeration</label><span class="val" id="exagVal">1.0×</span></div>
+      <input type="range" id="exag" min="1" max="4" step="0.1" value="1">
+    </section>
+    <section>
+      <p class="label">Layers</p>
+      <div class="toggles">
+        <label><input type="checkbox" id="tLot" checked><span class="swatch" style="background:var(--lot)"></span>Lot boundary</label>
+        <label><input type="checkbox" id="tFire" checked><span class="swatch" style="background:var(--fire)"></span>Bushfire prone land (vegetation buffer)</label>
+        <label><input type="checkbox" id="tC2" checked><span class="swatch" style="background:var(--c2)"></span>C2 Environmental Conservation zone</label>
+        <label><input type="checkbox" id="tLvl" checked><span class="swatch" style="background:var(--fg)"></span>Corner levels</label>
+      </div>
+    </section>
+    <section class="btns">
+      <button type="button" id="vLot">Lot view</button>
+      <button type="button" id="vStreet">From the street</button>
+      <button type="button" id="vTop">Plan view</button>
+    </section>
+    <p class="note"><strong>Indicative only.</strong> Terrain is the NSW 5 m elevation grid (from stereo imagery, accuracy around ±1 m), resampled to 1 m and draped with the February 2014 aerial photo. Buildings and trees are not modelled. Use a registered surveyor's detail and level survey for design.</p>
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const DATA = __DATA__;
+const TEXTURE = "data:image/jpeg;base64,__TEXTURE__";
+
+(function () {
+  const N = DATA.size, BASE = DATA.base, HALF = N / 2;
+  const raw = Uint8Array.from(atob(DATA.heights), c => c.charCodeAt(0));
+  const H = new Float32Array(N * N);
+  const dv = new DataView(raw.buffer);
+  for (let i = 0; i < N * N; i++) H[i] = dv.getUint16(i * 2, true) / 1000 + BASE; // row 0 = south
+
+  const css = getComputedStyle(document.documentElement);
+  const tok = n => new THREE.Color(css.getPropertyValue(n).trim() || "#ff0000");
+
+  const stage = document.getElementById("stage");
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  stage.prepend(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, 1, 3000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.maxPolarAngle = Math.PI * 0.495;
+  controls.minDistance = 20; controls.maxDistance = 700;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8070, 0.85));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.55);
+  sun.position.set(-150, 220, -120); // from the north-west, as in the southern hemisphere afternoon
+  scene.add(sun);
+
+  // Height lookup in grid metres (gx east, gy north from SW corner), bilinear
+  function hAt(gx, gy) {
+    const x = Math.min(Math.max(gx - 0.5, 0), N - 1.001), y = Math.min(Math.max(gy - 0.5, 0), N - 1.001);
+    const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j;
+    const a = H[j * N + i], b = H[j * N + i + 1], c = H[(j + 1) * N + i], d = H[(j + 1) * N + i + 1];
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy;
+  }
+
+  let exag = 1;
+  const yOf = h => (h - BASE) * exag;
+
+  // Terrain surface
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(N * N * 3), uv = new Float32Array(N * N * 2);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = j * N + i;
+    pos[k * 3] = i + 0.5 - HALF; pos[k * 3 + 2] = -(j + 0.5 - HALF);
+    uv[k * 2] = (i + 0.5) / N; uv[k * 2 + 1] = (j + 0.5) / N;
+  }
+  const idx = [];
+  for (let j = 0; j < N - 1; j++) for (let i = 0; i < N - 1; i++) {
+    const a = j * N + i, b = a + 1, c = a + N, d = c + 1;
+    idx.push(a, b, c, b, d, c);
+  }
+  geo.setIndex(idx);
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  const tex = new THREE.TextureLoader().load(TEXTURE, () => render());
+  tex.encoding = THREE.sRGBEncoding;
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  const terrain = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tex }));
+  scene.add(terrain);
+
+  // Block sides down to a datum, so the model reads as a cut block of ground
+  const skirtMat = new THREE.MeshLambertMaterial({ color: 0x9a8468, side: THREE.DoubleSide });
+  const skirt = new THREE.Mesh(new THREE.BufferGeometry(), skirtMat);
+  scene.add(skirt);
+  const DATUM = DATA.datum;
+  function buildSkirt() {
+    const edge = [];
+    for (let i = 0; i < N; i++) edge.push([i, 0]);
+    for (let j = 1; j < N; j++) edge.push([N - 1, j]);
+    for (let i = N - 2; i >= 0; i--) edge.push([i, N - 1]);
+    for (let j = N - 2; j >= 0; j--) edge.push([0, j]);
+    const p = [];
+    for (let e = 0; e < edge.length - 1; e++) {
+      const [i1, j1] = edge[e], [i2, j2] = edge[e + 1];
+      const x1 = i1 + 0.5 - HALF, z1 = -(j1 + 0.5 - HALF), x2 = i2 + 0.5 - HALF, z2 = -(j2 + 0.5 - HALF);
+      const y1 = yOf(H[j1 * N + i1]), y2 = yOf(H[j2 * N + i2]), yb = yOf(DATUM);
+      p.push(x1, y1, z1, x2, y2, z2, x1, yb, z1, x2, y2, z2, x2, yb, z2, x1, yb, z1);
+    }
+    skirt.geometry.dispose();
+    skirt.geometry = new THREE.BufferGeometry();
+    skirt.geometry.setAttribute("position", new THREE.Float32BufferAttribute(p, 3));
+    skirt.geometry.computeVertexNormals();
+  }
+
+  // Draped lines: densify each ring so it follows the ground, lifted 0.25 m to avoid z-fighting
+  function drape(ring, lift) {
+    const pts = [];
+    for (let s = 0; s < ring.length - 1; s++) {
+      const [x1, y1] = ring[s], [x2, y2] = ring[s + 1];
+      const n = Math.max(1, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 0.5));
+      for (let t = 0; t < n; t++) {
+        const gx = x1 + (x2 - x1) * t / n, gy = y1 + (y2 - y1) * t / n;
+        pts.push(new THREE.Vector3(gx - HALF, yOf(hAt(gx, gy)) + lift, -(gy - HALF)));
+      }
+    }
+    const [gx, gy] = ring[ring.length - 1];
+    pts.push(new THREE.Vector3(gx - HALF, yOf(hAt(gx, gy)) + lift, -(gy - HALF)));
+    return pts;
+  }
+  function ribbon(rings, color, width, lift, fill) {
+    const g = new THREE.Group();
+    rings.forEach(ring => {
+      const curve = new THREE.CatmullRomCurve3(drape(ring, lift), false, "catmullrom", 0);
+      const m = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(8, curve.points.length), width, 6, false),
+        new THREE.MeshBasicMaterial({ color }));
+      g.add(m);
+    });
+    return g;
+  }
+  const layers = {};
+  function buildOverlays() {
+    Object.values(layers).forEach(l => { scene.remove(l); l.traverse(o => o.geometry && o.geometry.dispose()); });
+    layers.fire = ribbon(DATA.bushfire, tok("--fire"), 0.22, 0.3);
+    layers.c2 = ribbon(DATA.c2, tok("--c2"), 0.3, 0.4);
+    layers.lot = ribbon([DATA.lot], tok("--lot"), 0.35, 0.5);
+    layers.posts = new THREE.Group();
+    DATA.corners.forEach(c => {
+      const y = yOf(hAt(c.x, c.y));
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 3, 10), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+      post.position.set(c.x - HALF, y + 1.5, -(c.y - HALF));
+      layers.posts.add(post);
+    });
+    Object.values(layers).forEach(l => scene.add(l));
+    applyToggles();
+  }
+
+  // HTML labels for corner levels and the street
+  const tags = DATA.corners.map(c => {
+    const el = document.createElement("div"); el.className = "tag"; el.textContent = "≈" + hAt(c.x, c.y).toFixed(1) + " m"; stage.appendChild(el); return { el, c };
+  });
+  const streetTag = document.createElement("div"); streetTag.className = "tag street"; streetTag.textContent = "Waugh Street"; stage.appendChild(streetTag);
+
+  function applyToggles() {
+    layers.lot.visible = document.getElementById("tLot").checked;
+    layers.fire.visible = document.getElementById("tFire").checked;
+    layers.c2.visible = document.getElementById("tC2").checked;
+    const lv = document.getElementById("tLvl").checked;
+    layers.posts.visible = lv;
+    tags.forEach(t => t.el.hidden = !lv);
+  }
+
+  function rebuildHeights() {
+    for (let k = 0; k < N * N; k++) pos[k * 3 + 1] = yOf(H[k]);
+    geo.attributes.position.needsUpdate = true;
+    geo.computeVertexNormals();
+    buildSkirt();
+    buildOverlays();
+  }
+
+  const lotC = DATA.lotCentre;
+  function lotTarget() { return new THREE.Vector3(lotC[0] - HALF, yOf(hAt(lotC[0], lotC[1])), -(lotC[1] - HALF)); }
+  function setView(kind) {
+    const t = lotTarget();
+    controls.target.copy(t);
+    if (kind === "top") camera.position.set(t.x, t.y + 170, t.z + 0.01);
+    else if (kind === "street") camera.position.set(t.x + 30, t.y + 6, t.z + 55);   // from the SE, across the curve of Waugh St
+    else camera.position.set(t.x + 95, t.y + 85, t.z + 120);
+    controls.update(); render();
+  }
+
+  const v = new THREE.Vector3();
+  function placeTag(el, gx, gy, lift) {
+    v.set(gx - HALF, yOf(hAt(gx, gy)) + lift, -(gy - HALF)).project(camera);
+    const w = stage.clientWidth, h = stage.clientHeight;
+    const off = v.z > 1 || Math.abs(v.x) > 1.05 || Math.abs(v.y) > 1.05;
+    el.style.visibility = off ? "hidden" : "visible";
+    el.style.left = ((v.x + 1) / 2 * w) + "px"; el.style.top = ((1 - v.y) / 2 * h) + "px";
+  }
+  const northSvg = document.getElementById("northSvg");
+  function render() {
+    renderer.render(scene, camera);
+    tags.forEach(t => placeTag(t.el, t.c.x, t.c.y, 3.2));
+    placeTag(streetTag, DATA.street[0], DATA.street[1], 1);
+    const az = controls.getAzimuthalAngle();
+    northSvg.style.transform = `rotate(${az * 180 / Math.PI}deg)`;
+  }
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); render();
+  }
+  controls.addEventListener("change", render);
+  (function loop() { requestAnimationFrame(loop); if (controls.update()) render(); })();
+  new ResizeObserver(resize).observe(stage);
+
+  const exagEl = document.getElementById("exag");
+  exagEl.addEventListener("input", () => {
+    exag = +exagEl.value; document.getElementById("exagVal").textContent = exag.toFixed(1) + "×";
+    const before = lotTarget();
+    rebuildHeights();
+    const shift = lotTarget().sub(before);  // keep the lot in the same place on screen
+    camera.position.add(shift); controls.target.add(shift);
+    controls.update(); render();
+  });
+  ["tLot", "tFire", "tC2", "tLvl"].forEach(id => document.getElementById(id).addEventListener("change", () => { applyToggles(); render(); }));
+  document.getElementById("vLot").onclick = () => setView("lot");
+  document.getElementById("vStreet").onclick = () => setView("street");
+  document.getElementById("vTop").onclick = () => setView("top");
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { buildOverlays(); render(); });
+
+  rebuildHeights();
+  resize();
+  setView("lot");
+})();
+</script>

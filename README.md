@@ -60,6 +60,18 @@ Griffith-DEM-AHD_55_5m, derived from stereo imagery), resampled to 1 m. The 2 m 
 ground and its vertical accuracy is metre-scale. No finer LiDAR product was found through these
 services. Get a detail and level survey by a registered surveyor before design.
 
+## 3D terrain model
+
+![3D terrain view](site_3d_view.png)
+
+- **Interactive viewer:** `site_3d.html`, a self-contained page also published as a private artifact. Orbit and zoom, adjust vertical exaggeration (1–4×), switch the overlays on and off, and jump to lot, street or plan views.
+- **Point cloud:** `data/3d/site_pointcloud.las`, 230,400 points at 0.5 m spacing over a 240 × 240 m block, coloured from the aerial photo. Coordinates are GDA2020 MGA Zone 55 (EPSG:7855) with heights in m AHD, and the CRS is embedded in the file. It opens in CloudCompare, QGIS and most CAD/BIM tools. `site_pointcloud_local.ply` is the same cloud with local coordinates (origin at E 414993, N 6208020, AHD 0), for MeshLab or Blender.
+- **Textured mesh:** `data/3d/site_terrain.glb`, the 1 m terrain surface with the photo draped on. It opens in the Windows 3D Viewer, Blender and SketchUp (via an importer). Local coordinates: x east, y up (m AHD), z south.
+
+**This is not LiDAR.** The points are interpolated from the NSW 5 m elevation grid, so they show the general fall of the land, not kerbs, banks or trees. A true LiDAR point cloud for Griffith may be available from Geoscience Australia's ELVIS portal (elevation.fsdf.org.au). Downloads there are ordered on the website and delivered by email. The old ELVIS API host `elvis2018-ga.fmecloud.com` no longer exists in DNS, and the new API (`api.elevation.fsdf.org.au`) returned errors when called directly from this environment.
+
+`scripts/build_3d_site.py` builds the point cloud, mesh and viewer data from `data/3d/dem_240m.tif` and the imagery tiles; `scripts/build_3d_viewer.py` bakes `site_3d.html`.
+
 ## Imagery
 
 The aerial photo is the NSW_Imagery tile cache at zoom 20, ≈0.12 m/pixel. Per `NSW_Imagery_Dates` it is
