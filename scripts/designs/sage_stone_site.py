@@ -29,7 +29,7 @@ OUT = ROOT / "data" / "3d"
 LOT, A, U, NV = hm.LOT, hm.A, hm.U, hm.NV
 E0, N1, NCELL = hm.E0, hm.N1, hm.NCELL
 FFL, PAD, GARAGE_FL = hm.FFL, hm.PAD, hm.GARAGE_FL
-UPPER_T = 158.6        # upper garden terrace behind the pool (rear triangle, out to the rear boundary)
+UPPER_T = 158.55       # small raised garden terrace (about 1 m up) along the rear boundary, pergola + seat
 INSET = 0.3            # designed ground reaches the lot boundary less the retaining-wall thickness
 
 # ---- design (street frame, metres) ---------------------------------------------------------------
@@ -39,7 +39,7 @@ DESIGN = {
     "link": (8.8, 15.6, 11.0, 20.5),        # white single-storey entry/living link, recessed behind the portico
     "portico": (10.0, 13.6, 8.5, 11.0),     # timber entry portico with its own gable
     "east": (15.6, 22.8, 7.5, 23.5),        # sage gabled wing (kitchen/dining) over the garage, gable + bay window to the street
-    "west": (2.0, 8.8, 20.5, 31.0),         # single-storey sage living wing on the SW side, glazed north gable
+    "west": (2.0, 8.8, 20.5, 29.5),         # single-storey sage living wing on the SW side, glazed north gable
     "outdoor": (21.8, 25.6, 25.0, 31.0),    # covered outdoor room with a stone fireplace
     "garage": (15.6, 22.0, 7.5, 15.0),      # double garage at street level under the east wing (door >= 5.5 m back)
     "oriel": (17.25, 21.15, 6.85, 7.5),     # projecting bay window over the garage door, metal awning roof
@@ -47,7 +47,8 @@ DESIGN = {
     "pool": (10.5, 20.0, 25.0, 29.0),
     "court": (8.8, 21.8, 20.5, 31.0),       # paved courtyard between the wings
     "stair": (1.4, 3.2, 1.0, 5.4),          # front steps from the gate (SW end) up to the lawn
-    "upper_line": [[-8.0, 31.34], [33.0, 36.67]],  # pad / upper-terrace retaining wall, parallel-ish to the rear
+    "perg_u": 6.0,
+    "upper_line": [[-8.0, 27.62], [33.0, 41.72]],  # pad / upper-terrace retaining wall, 3.6 m in from the rear boundary
 }
 WALL_TOP = 156.4   # low street wall (about 0.9 m above the footpath)
 BANK_TOP = 5.0     # planted bank rises from the wall to lawn level by n = 5
@@ -58,7 +59,7 @@ RIDGES = [("main white gable (2 storey)", 5.0 + 3.4 * 0.8391, (5.4, 8.55), (5.4,
           ("entry link (1 storey)", 3.0 + 4.75 * 0.7002, (8.8, 15.75), (15.6, 15.75)),
           ("portico", 2.6 + 1.8 * 0.7002, (11.8, 8.2), (11.8, 11.0)),
           ("east sage wing", 3.0 + 3.6, (19.2, 7.05), (19.2, 23.95)),
-          ("west sage wing", 3.2 + 3.4 * 1.0724, (5.4, 20.5), (5.4, 31.45)),
+          ("west sage wing", 3.2 + 3.4 * 1.0724, (5.4, 20.5), (5.4, 29.95)),
           ("outdoor room", 0.0 + 2.95 + 1.9 * 0.8391, (23.7, 24.7), (23.7, 31.3))]
 
 
@@ -78,6 +79,16 @@ def F(poly):
 
 def rect(u0, u1, n0, n1):
     return Polygon([(u0, n0), (u1, n0), (u1, n1), (u0, n1)])
+
+
+def pergola_poly(grow=0.0):
+    """pergola footprint on the rear terrace, aligned with the terrace wall (4.6 m along it, 2.6 m deep)"""
+    (a, b), (c, d) = DESIGN["upper_line"]
+    t = np.array([c - a, d - b]) / np.hypot(c - a, d - b)
+    nrm = np.array([-t[1], t[0]])
+    o = np.array([DESIGN["perg_u"], upper_n(DESIGN["perg_u"])]) + nrm * 0.45
+    pts = [o + t * x + nrm * y for x, y in ((-2.3 - grow, -grow * 0.5), (2.3 + grow, -grow * 0.5), (2.3 + grow, 2.6 + grow), (-2.3 - grow, 2.6 + grow))]
+    return Polygon([tuple(p) for p in pts])
 
 
 def upper_n(u):
@@ -162,7 +173,7 @@ def surfaces():
     lawn_lo = lo.difference(houses).difference(court).difference(stair_top)
     paving = court.difference(pool_ring)
     up = upper_polygon()
-    fire = Point(12.0, upper_n(12.0) + 3.6).buffer(2.3, 24)                 # flagstone fire-pit circle on the upper lawn
+    fire = pergola_poly(0.3)                                                # flagstone floor under the pergola
     drive_side = INNER.intersection(rect(D["garage"][1], 40, 0, D["garage"][3]))
     return {"lawn_lo": tris(lawn_lo), "paving": tris(paving), "lawn_up": tris(up.difference(fire)),
             "fire_pad": tris(up.intersection(fire)), "drive_side": tris(drive_side)}
@@ -257,7 +268,7 @@ def cmd_plan():
             u0, u1, n0, n1 = D[k]
             label((u0 + u1) / 2, (n0 + n1) / 2 + {"garage": -2.0, "east": 4.5}.get(k, 0), lab)
     label(15.5, 23.0, "North courtyard", 18)
-    label(13.0, upper_n(13) + 4.5, "Upper garden terrace %.1f" % UPPER_T, 18)
+    label(16.0, upper_n(16) + 1.8, "Raised garden terrace %.2f" % UPPER_T, 16)
     label(8.0, 6.3, "Front lawn %.2f" % PAD, 16)
     d.line([px(*c) for c in LOT_F.exterior.coords], fill=(230, 40, 40, 255), width=5)
     label(9, -3.0, "Waugh Street", 24)
