@@ -142,7 +142,7 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     p.outdoor("Verandah", 0.8, 15.4, 7.0, 9.4, (230, 222, 205), 12)
     rooms = [("Study", 1, 5.2, 9.4, 14.0), ("Entry", 5.2, 10.0, 9.4, 14.0, ROOM, True, 14, (6.6, 11.2)), ("Media", 10.0, 15.6, 9.4, 14.0),
              ("Living", 1, 8.0, 14.0, 21.4), ("Kitchen / dining", 8.0, 15.6, 14.0, 21.4),
-             ("Guest bed", 15.6, 22.8, 7.5, 11.3), ("Mud", 15.6, 18.5, 11.3, 15.5, ROOM, True, 11, (17.05, 14.65)),
+             ("Bed 5 / guest", 15.6, 22.8, 7.5, 11.3), ("Mud", 15.6, 18.5, 11.3, 15.5, ROOM, True, 11, (17.05, 14.65)),
              ("Rumpus", 15.6, 22.8, 18.0, 22.6), ("Gym\n(under pool house)", 1, 9, 21.4, 26.8),
              ("Cellar / store", 1, 9, 26.8, 32.3)]
     for r in rooms:
@@ -173,12 +173,12 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     q.note(16.0, 20.3, "roof below (lowered rear roof)", 12, (80, 80, 80))
     q.rect(12.5, 22.5, 28.5, 32.0, (190, 220, 235), (120, 160, 190), 1)
     q.note(17.5, 30.25, f"pool (deck RL {DECK:.2f})", 12, (60, 90, 120))
-    rooms = [("Retreat\n(street view)", 1, 8.0, 11.5, 17.5), ("Bed 2", 10.0, 13.2, 11.5, 16.0),
-             ("Master bed\n(views E + street)", 15.6, 22.8, 11.5, 15.0), ("Hall", 8.0, 15.6, 16.0, 17.5),
+    rooms = [("Bed 3", 1, 4.6, 11.5, 16.0), ("Bed 4", 4.6, 8.0, 11.5, 16.0), ("Bed 2", 10.0, 13.2, 11.5, 16.0),
+             ("Master bed\n(views E + street)", 15.6, 22.8, 11.5, 15.0), ("Hall", 1, 15.6, 16.0, 17.5),
              ("Bar /\nkitchenette", 1, 5.5, 17.5, 21.4), ("Pool house", 1, 9, 21.4, 32.3)]
     for r in rooms:
         q.room(*r)
-    for name, *r in (("Bath", 13.2, 15.6, 11.5, 14.2), ("Linen", 13.2, 15.6, 14.2, 16.0), ("WIR", 15.6, 19.2, 15.0, 17.5),
+    for name, *r in (("Bath", 13.2, 15.6, 11.5, 16.0), ("WIR", 15.6, 19.2, 15.0, 17.5),
                      ("Ensuite", 19.2, 22.8, 15.0, 17.5), ("Shower\n/ WC", 5.5, 9.0, 17.5, 21.4)):
         q.room(name, *r, fill=WET, size=11)
     q.stair(8.0, 10.0, 11.5, 14.0, "n", "DN")
@@ -193,7 +193,8 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
     q.glass_u(22.6, 24.8, 9.0)
     q.glass_u(18.6, 20.8, 9.0)
     q.glass_u(11.8, 15.0, 22.8, 7)
-    q.glass_n(2.0, 7.0, 11.5, 6)
+    q.glass_n(1.8, 3.8, 11.5, 6)
+    q.glass_n(5.3, 7.3, 11.5, 6)
     q.glass_n(16.4, 22.0, 11.5, 6)
     q.glass_n(10.6, 12.6, 11.5)
     q.glass_n(3.3, 6.7, 32.3)
@@ -214,8 +215,11 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
 
     # side panel: levels and areas
     sx = 3 * PW + 120
+    d.text((sx, oy - 52), "5 bedrooms", font=F(24, True), fill=(25, 25, 25))
+    d.multiline_text((sx, oy - 24), "Master + beds 2–4 upstairs,\nbed 5 / guest on the ground floor", font=F(13), fill=(70, 70, 70))
     gf = 14.6 * 12.0 + 7.2 * 15.1 + 8 * 10.9
     up = 21.8 * 6.0 + 8 * 14.8
+    y0 = oy + 14
     lines = [("Levels (m AHD)", True), (f"Garage floor  {GARAGE:.2f}", False), (f"Lower courtyard  {PADZ:.2f}", False),
              (f"Ground floor  {FFL:.2f}", False), (f"Pool deck / rear lawn  {DECK:.2f}", False),
              (f"Upper floor / pool house  {UPPER:.2f}", False), ("", False),
@@ -227,7 +231,7 @@ def main(out=ROOT / "designs" / "farmhouse_raised_floorplan.png"):
              ("Walls, openings and levels follow", False), ("the 3D model; the room layout", False),
              ("inside them is a concept only.", False), ("Gross areas to external walls.", False),
              ("Not for construction.", False)]
-    y = oy
+    y = y0
     for txt, bold in lines:
         d.text((sx, y), txt, font=F(17 if bold else 15, bold), fill=(25, 25, 25) if bold else (60, 60, 60))
         y += 26 if bold else 22
