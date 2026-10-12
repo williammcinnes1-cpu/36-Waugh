@@ -1,5 +1,5 @@
-"""Modern farmhouse, RAISED REAR variant (rough concept): the pool sits on a stone-walled deck 1 m above the
-courtyard (steps up), and the west family wing floor is lifted to the same level, with its own gable roof.
+"""Modern farmhouse, RAISED REAR variant (rough concept): the pool sits on a stone-walled deck 1.8 m above the
+courtyard (steps up), and the west wing becomes a pool house at the same level, bifold doors onto the deck, its own gable roof.
 Derived from farmhouse_cycles.py.
 Cycles render of option B, the modern farmhouse (privacy to the street, living to a north courtyard).
 
@@ -42,7 +42,7 @@ EAVE_REAR, PITCH_REAR = 2.7, math.radians(19)   # long west wing: its ridge stay
 NF, FE, PF = 6.7, 2.65, math.radians(12)        # front lean-to: front edge n, underside height there, pitch
 ZH, PL = 4.2, math.radians(14)                  # rear lean-to: underside height at the view-storey wall, pitch
 ROOF = {}
-RP = 1.0   # raised rear level (pool deck, west wing floor) above the courtyard
+RP = 1.8   # raised rear level (pool deck, west wing floor) above the courtyard
 T = 0.25   # wall thickness
 
 
@@ -985,14 +985,12 @@ def build_house():
     box(ru0, ru1, rn0, rn1, RP - 0.25, RP, "floor")
     sl = (rn0 + 2.4, rn1 - 0.6, RP, RP + 2.45)
     wall_n(rn0, rn1, ru1 - T, ru1, 0, EW, [sl], "clad")
-    window_n(*sl, ru1 - T, ru1, cols=4, rows=1, outward=1)
+    window_n(*sl, ru1 - T, ru1, cols=7, rows=1, outward=1)   # pool house bifolds
     wall_n(rn0, rn1, ru0, ru0 + T, 0, EW, [(rn0 + 4.4, rn0 + 5.6, RP + 1.2, RP + 2.2)], "clad")
     window_n(rn0 + 4.4, rn0 + 5.6, RP + 1.2, RP + 2.2, ru0, ru0 + T, cols=1, rows=1, outward=-1)
     wall_u(ru0, ru1, rn0, rn0 + T, 0, EW, [], "clad")                        # south wall, its gable above the lean-to
     gable_u(ru0, ru1, rn0, rn0 + T, EW, PITCH_REAR, "clad")
-    gw = (ru0 + 1.2, ru1 - 1.2, RP, RP + 2.45)
-    wall_u(ru0, ru1, rn1 - T, rn1, 0, EW, [gw], "clad")
-    window_u(*gw, rn1 - T, rn1, cols=3, rows=1, outward=1)
+    wall_u(ru0, ru1, rn1 - T, rn1, 0, EW, [], "clad")                        # solid north end (client: no low glass)
     gable_u(ru0, ru1, rn1 - T, rn1, EW, PITCH_REAR, "clad", opening=(rm - 0.9, rm + 0.9, EW + 0.2, EW + 0.85))
     window_u(rm - 0.9, rm + 0.9, EW + 0.2, EW + 0.85, rn1 - T, rn1, cols=3, rows=1, outward=1)
     room_light(ru0 + 0.5, ru1 - 0.5, rn0 + 0.5, rn1 - 0.5, EW, 1500)
@@ -1091,12 +1089,12 @@ def build_house():
         box(a_, c_, n0_, n1_, ZD - 0.08, ZD + 0.03, "paving")
     box(ru1 + 1.6, 26.0, dn0 - 0.04, dn0 + 0.3, ZD - 0.06, ZD + 0.05, "coping")          # coping on the front wall
     box(ru1 + 1.3, ru1 + 1.64, rn0 + 1.8, dn0, ZD - 0.06, ZD + 0.05, "coping")
-    su0, su1, nst = 14.4, 17.6, 5                                                    # broad stone steps up to the pool
+    su0, su1, nst = 14.4, 17.6, 9                                                    # broad stone steps up to the pool
     for k in range(1, nst):
-        box(su0, su1, dn0 - (nst - k) * 0.34, dn0, PADZ - 0.3, PADZ + RP * k / nst, "flagstone")
+        box(su0, su1, dn0 - (nst - k) * 0.3, dn0, PADZ - 0.3, PADZ + RP * k / nst, "flagstone")
     for x in (su0 - 0.25, su1 + 0.25):
-        box(x - 0.25, x + 0.25, dn0 - (nst - 1) * 0.34, dn0, PADZ - 0.3, ZD + 0.35, "limestone")
-        lantern(x, dn0 - (nst - 1) * 0.34 + 0.25, ZD + 0.35, 0.22, 12)
+        box(x - 0.25, x + 0.25, dn0 - (nst - 1) * 0.3, dn0, PADZ - 0.3, ZD + 0.35, "limestone")
+        lantern(x, dn0 - (nst - 1) * 0.3 + 0.25, ZD + 0.35, 0.22, 12)
     box(ru1 + 1.7, su0 - 0.3, dn0 + 0.1, dn0 + 0.13, ZD + 0.05, ZD + 1.2, "glass")
     box(su1 + 0.3, 26.0, dn0 + 0.1, dn0 + 0.13, ZD + 0.05, ZD + 1.2, "glass")
     for a_, c_, n0_, n1_ in ((pu0 - 0.3, pu1 + 0.3, pn0 - 0.3, pn0), (pu0 - 0.3, pu1 + 0.3, pn1, pn1 + 0.3), (pu0 - 0.3, pu0, pn0, pn1), (pu1, pu1 + 0.3, pn0, pn1)):
