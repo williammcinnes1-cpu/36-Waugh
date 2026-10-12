@@ -121,12 +121,15 @@ def build_house():
     # Garage at street level in front of the NE wing; its roof is part of the terrace
     m.box(16.2, 22.6, 2.2, 9.6, GARAGE_FL, PAD, STONE, top=PAVING)
     m.quad([(16.9, 2.18, GARAGE_FL), (21.9, 2.18, GARAGE_FL), (21.9, 2.18, GARAGE_FL + 2.4), (16.9, 2.18, GARAGE_FL + 2.4)], DOOR)
-    # Front retaining / garden wall, terrace, pool, steps
+    # Front retaining / garden wall and street-side garden terrace
     m.box(0.3, 16.2, 1.6, 2.2, 154.5, PAD + 1.0, STONE)
     m.quad([(0.3, 2.2, PAD), (16.2, 2.2, PAD), (16.2, 10.0, PAD), (0.3, 10.0, PAD)], PAVING)
-    m.quad([(3.0, 4.0, PAD + 0.01), (13.0, 4.0, PAD + 0.01), (13.0, 7.6, PAD + 0.01), (3.0, 7.6, PAD + 0.01)], POOL)
-    # Rear retaining wall where the pad cuts into the slope
-    m.box(0.3, 22.9, 27.0, 27.4, PAD, 160.0, STONE)
+    # Living areas open north: glazed rear of the link onto a courtyard with the pool
+    m.quad([(15.6, 23.02, FFL), (7.8, 23.02, FFL), (7.8, 23.02, FFL + LINK_TOP - 0.4), (15.6, 23.02, FFL + LINK_TOP - 0.4)], GLASS)
+    m.quad([(0.3, 24.0, PAD), (22.9, 24.0, PAD), (22.9, 33.0, PAD), (0.3, 33.0, PAD)], PAVING)
+    m.quad([(4.0, 27.5, PAD + 0.01), (14.0, 27.5, PAD + 0.01), (14.0, 31.0, PAD + 0.01), (4.0, 31.0, PAD + 0.01)], POOL)
+    # Rear retaining wall where the courtyard cuts into the slope
+    m.box(0.3, 22.9, 33.0, 33.4, PAD, 160.8, STONE)
     return m
 
 
@@ -142,7 +145,7 @@ def designed_ground(dem):
                 continue
             if 16.2 <= uu <= 22.9 and -1.0 <= vv < 9.6:          # garage + driveway
                 g[r, c] = GARAGE_FL if vv >= 2.2 else np.interp(vv, [-1.0, 2.2], [g[r, c], GARAGE_FL])
-            elif 0.3 <= uu <= 22.9 and 2.2 <= vv <= 27.0:          # house + terrace pad
+            elif 0.3 <= uu <= 22.9 and 2.2 <= vv <= 33.0:          # house, terrace and north courtyard pad
                 g[r, c] = PAD
             elif 0.3 <= uu <= 16.2 and 0.0 <= vv < 1.6:            # front garden bed below the wall
                 g[r, c] = min(g[r, c], 155.6)

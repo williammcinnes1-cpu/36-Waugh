@@ -112,7 +112,7 @@ def main():
     side_label(0, 1, "45.0 m")
     side_label(1, 2, "36.9 m")
     side_label(2, 3, "32.9 m")
-    side_label(6, 7, "arc ≈25.5 m")
+    side_label(6, 7, "arc ≈23.0 m")
 
     # Indicative ground levels at the main corners from the 5 m DEM
     to_mga = pyproj.Transformer.from_crs(4326, 7855, always_xy=True)
