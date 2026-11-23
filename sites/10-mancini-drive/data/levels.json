@@ -1,0 +1,9 @@
+{
+ "lot_min": 116.31,
+ "lot_max": 117.08,
+ "lot_mean": 116.61,
+ "plane_slope_pct": 0.41,
+ "falls_towards_bearing_deg": 259,
+ "house_ground": 116.55,
+ "pool_ground": 116.46
+}

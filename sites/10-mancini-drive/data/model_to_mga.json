@@ -1,0 +1,7 @@
+{
+ "rotation_deg": -17.0,
+ "tx": 411303.862,
+ "ty": 6212132.079,
+ "iou": 0.908,
+ "note": "model plan (x, -z) in metres -> MGA55: rotate about model origin, then translate"
+}
