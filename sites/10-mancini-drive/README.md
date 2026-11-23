@@ -36,3 +36,13 @@ The pool is not in the 2014 imagery (built later or proposed).
 `viewer/index.html` (with `viewer/site.json` and `viewer/aerial.jpg`, built by `scripts/build_viewer.py` from the gmsh
 mesh of House.IGS): terrain draped with the aerial, lot boundary (red), a line 10 m inside the boundary (blue),
 0.25 m contours, and the house and pool. Published privately at https://claude.ai/artifact/WRS6y62avyobSXoHSsqBj3.
+
+## Pool as built
+The IGES pool position did not match the pool as built. The as-built pool and paved surround were traced from a recent
+Google Maps screenshot supplied by the client, registered to the NSW aerial with four tie points (house east end
+corners, cross-wing corner, driveway crossover; residuals 0.7–2.1 m): water ≈12.0 × 4.6 m, surround ≈15.2 × 10.0 m
+(`data/pool_asbuilt.json`, `data/google_to_mga.json`). Positional accuracy is about ±2 m.
+
+## Known issue: house roof
+House.IGS has walls, eaves and a flat ceiling but no roof surfaces, so the viewer shows the house without its hipped
+roof. House.SLDPRT (SolidWorks native) cannot be read without SolidWorks; a STEP export (.step/.stp) is needed.

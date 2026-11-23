@@ -118,7 +118,7 @@ def main(tris_path):
     T = np.load(tris_path)
     tf = json.load(open(DATA / "model_to_mga.json"))
     th = math.radians(tf["rotation_deg"])
-    keep = (T[:, :, 1].max(1) > 0.2) | (T[:, :, 1].min(1) < -0.2)
+    keep = T[:, :, 1].max(1) > 0.2                           # house only; the IGES pool is replaced by the as-built pool
     T = T[keep]
     px_, py_ = T[..., 0], -T[..., 2]                          # model plan frame (x, -z)
     e = px_ * math.cos(th) - py_ * math.sin(th) + tf["tx"]
@@ -135,15 +135,17 @@ def main(tris_path):
     from shapely.geometry import shape
     from shapely import affinity
     from shapely.ops import triangulate
-    pg = affinity.translate(affinity.rotate(shape(M["pool"]), tf["rotation_deg"], origin=(0, 0)), tf["tx"], tf["ty"])
-    water = [t for t in triangulate(pg) if pg.contains(t.representative_point())]
-    wpos = [[round(x - E0, 2), round(HOUSE_BASE - 0.15 - H0, 3), round(yy - N0, 2)] for t in water for x, yy in list(t.exterior.coords)[:3]]
+    PB = json.load(open(DATA / "pool_asbuilt.json"))
+    pg, sg = shape(PB["water"]), shape(PB["surround"])
+    pool_ground = zat(pg.centroid.x, pg.centroid.y)
+    ring = lambda g: [[round(x - E0, 2), round(yy - N0, 2)] for x, yy in list(g.exterior.coords)[:-1]]
+    wpos = []
 
     site = {
         "origin": {"E": E0, "N": N0, "H": H0, "crs": "GDA2020 / MGA zone 55 (EPSG:7855)"},
         "terrain": {"xs": xs, "ns": ns, "h": heights, "extent": [e_min - E0, e_min + size - E0, n_max - size - N0, n_max - N0]},
         "boundary": bnd, "inner10": inner, "edges": edges, "contours": contours,
-        "model": {"pos": [round(float(v), 3) for v in pos.ravel()], "kind": [int(k) for k in kind], "water": wpos,
+        "model": {"pos": [round(float(v), 3) for v in pos.ravel()], "kind": [int(k) for k in kind], "water": wpos, "pool": {"water": ring(pg), "surround": ring(sg), "ground": round(pool_ground - H0, 3)},
                   "house_base": HOUSE_BASE - H0},
         "facts": json.load(open(DATA / "levels.json")),
         "house_centre": [round(float(e.mean()) - E0, 2), round(float(n.mean()) - N0, 2)],

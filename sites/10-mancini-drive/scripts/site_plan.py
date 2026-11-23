@@ -31,7 +31,9 @@ def placed():
 def main():
     A = Aerial()
     lot = lot_mga()
-    house, pool, mlot, t = placed()
+    house, _iges_pool, mlot, t = placed()
+    PB = json.load(open(DATA / "pool_asbuilt.json"))                          # as built, from the client's Google screenshot
+    pool, surround = shape(PB["water"]), shape(PB["surround"])
     dem = rasterio.open(DATA / "dem_1m.tif")
     Z = dem.read(1)
     tr = dem.transform
@@ -61,7 +63,7 @@ def main():
         type(g)([TO_LL.transform(*c) for c in g.exterior.coords])
     fc = {"type": "FeatureCollection", "features": [
         {"type": "Feature", "properties": {"name": n, "area_m2": round(g.area, 1), "source": "House.IGS, fitted to the 2014 aerial"},
-         "geometry": mapping(to_ll(g))} for n, g in (("house", house), ("pool", pool))]}
+         "geometry": mapping(to_ll(g))} for n, g in (("house", house), ("pool_asbuilt", pool), ("pool_surround", surround))]}
     json.dump(fc, open(DATA / "placed_model.geojson", "w"))
 
     # --- picture: crop around the lot, 1.6x
@@ -111,12 +113,13 @@ def main():
     # house and pool from the IGES model
     d.polygon([P(*c) for c in house.exterior.coords], fill=(255, 255, 255, 70), outline=(255, 255, 255, 255))
     d.line([P(*c) for c in house.exterior.coords], fill=(255, 255, 255, 255), width=3)
-    d.polygon([P(*c) for c in pool.exterior.coords], fill=(40, 170, 230, 200), outline=(0, 90, 160, 255))
+    d.polygon([P(*c) for c in surround.exterior.coords], fill=(236, 236, 228, 235), outline=(90, 90, 90, 255))
+    d.polygon([P(*c) for c in pool.exterior.coords], fill=(40, 170, 230, 235), outline=(0, 90, 160, 255))
     hx, hy = P(house.centroid.x, house.centroid.y)
     d.text((hx, hy), f"HOUSE\n(House.IGS, {house.area:.0f} m²)", font=F(15, True), fill="white", anchor="mm", align="center",
            stroke_width=3, stroke_fill=(20, 20, 20))
     px_, py_ = P(pool.centroid.x, pool.centroid.y)
-    d.text((px_ - 70, py_ - 20), f"POOL\n{pool.area:.0f} m²", font=F(14, True), fill="white", anchor="mm", align="center",
+    d.text((px_, py_), f"POOL (as built)\n≈12.0 × 4.6 m", font=F(14, True), fill="white", anchor="mm", align="center",
            stroke_width=3, stroke_fill=(0, 60, 110))
     # spot heights at the lot corners (main corners only) and at the house and pool
     for e, n in corners:
@@ -150,10 +153,11 @@ def main():
         s.rectangle([x0, y + 6, x0 + 40, y + 14], fill=(110, 120, 100))
         s.line([(x0, y + 10), (x0 + 40, y + 10)], fill=col, width=w)
         s.text((x0 + 52, y), txt, font=F(15), fill=(40, 40, 40)); y += 26
-    s.rectangle([x0, y + 2, x0 + 40, y + 18], fill=(40, 170, 230)); s.text((x0 + 52, y), "Pool from House.IGS", font=F(15), fill=(40, 40, 40)); y += 34
-    notes = ["House and pool placed by fitting the IGES", f"model's roof to the aerial (overlap {t['iou'] * 100:.0f}%,",
+    s.rectangle([x0, y + 2, x0 + 40, y + 18], fill=(40, 170, 230)); s.text((x0 + 52, y), "Pool as built (Google imagery, ±2 m)", font=F(15), fill=(40, 40, 40)); y += 34
+    notes = ["House placed by fitting the IGES model's", f"footprint to the aerial roof (overlap {t['iou'] * 100:.0f}%,",
              f"rotation {t['rotation_deg']:.1f}°). The model's own lot outline",
-             "lands on the cadastre within about a metre.", "",
+             "lands on the cadastre within about a metre.", "Pool and surround as built: traced from the",
+             "client's Google Maps image, tied to the NSW", "aerial at 4 points (within about 2 m).", "",
              "Levels: NSW 5 m DEM (from stereo imagery),", "indicative only (±~1 m). Get a detail and",
              "level survey before siting the pool shed."]
     for n_ in notes:

@@ -71,7 +71,8 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     <dt>Zoning</dt><dd>R5 Large Lot Residential</dd>
     <dt>Ground</dt><dd id="f-ground">–</dd>
     <dt>Fall</dt><dd id="f-fall">–</dd>
-    <dt>House / pool</dt><dd>from House.IGS</dd>
+    <dt>House</dt><dd>from House.IGS</dd>
+    <dt>Pool</dt><dd>as built ≈12.0 × 4.6 m</dd>
   </dl>
   <div class="key">
     <label><span class="swatch" style="background: var(--boundary)"></span>Lot boundary</label>
@@ -79,7 +80,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     <label><input type="checkbox" id="t-contours" checked> <span class="swatch" style="background: #ff9a1f"></span>0.25 m contours</label>
     <label><input type="checkbox" id="t-exag"> Exaggerate levels ×5 (block is nearly flat)</label>
   </div>
-  <div class="note">Drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan. Levels from the NSW 5 m elevation grid, indicative only. Aerial Feb 2014. House and pool fitted to the roof in the aerial.</div>
+  <div class="note">Drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan. Levels from the NSW 5 m elevation grid, indicative only. Aerial Feb 2014. House fitted to the roof in the aerial; pool traced from a recent Google Maps image (within about 2 m).</div>
 </details>
 
 <div class="views" role="group" aria-label="Camera views">
@@ -195,11 +196,31 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   const house = new THREE.Mesh(mg, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }));
   house.castShadow = true; house.receiveShadow = true;
   model.add(house);
-  const wg = new THREE.BufferGeometry();
-  wg.setAttribute("position", new THREE.Float32BufferAttribute(M.water.flatMap((p) => [p[0], p[1], -p[2]]), 3));
-  wg.computeVertexNormals();
-  model.add(new THREE.Mesh(wg, new THREE.MeshPhongMaterial({ color: 0x4fb3e8, transparent: true, opacity: 0.85, shininess: 90, side: THREE.DoubleSide })));
   scene.add(model);
+
+  // ---- pool as built (traced from the client's Google Maps image): paved surround, water, tiled shell
+  const PL = M.pool, pg0 = PL.ground;
+  const poolGroup = new THREE.Group();
+  const shapeOf = (ring) => new THREE.Shape(ring.map((p) => new THREE.Vector2(p[0], p[1])));
+  const sur = shapeOf(PL.surround);
+  sur.holes.push(new THREE.Path(PL.water.map((p) => new THREE.Vector2(p[0], p[1]))));
+  const flat = (shp, y, mat) => {                      // shape in (E, N) -> horizontal mesh at height y
+    const g = new THREE.ShapeGeometry(shp); g.rotateX(-Math.PI / 2); g.translate(0, y, 0);
+    const m = new THREE.Mesh(g, mat); m.receiveShadow = true; return m;
+  };
+  poolGroup.add(flat(sur, pg0 + 0.08, new THREE.MeshLambertMaterial({ color: 0xe9e7df, side: THREE.DoubleSide })));
+  poolGroup.add(flat(shapeOf(PL.water), pg0 - 0.12, new THREE.MeshPhongMaterial({ color: 0x3fa9e0, transparent: true, opacity: 0.82, shininess: 90, side: THREE.DoubleSide })));
+  poolGroup.add(flat(shapeOf(PL.water), pg0 - 1.6, new THREE.MeshLambertMaterial({ color: 0x2f7fb5, side: THREE.DoubleSide })));
+  const shell = [];
+  PL.water.forEach((p, i) => {
+    const q = PL.water[(i + 1) % PL.water.length];
+    shell.push(p[0], pg0 + 0.08, -p[1], q[0], pg0 + 0.08, -q[1], q[0], pg0 - 1.6, -q[1],
+               p[0], pg0 + 0.08, -p[1], q[0], pg0 - 1.6, -q[1], p[0], pg0 - 1.6, -p[1]);
+  });
+  const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.Float32BufferAttribute(shell, 3)); sg.computeVertexNormals();
+  poolGroup.add(new THREE.Mesh(sg, new THREE.MeshLambertMaterial({ color: 0x5aa7d6, side: THREE.DoubleSide })));
+  poolGroup.userData.ground = pg0;
+  scene.add(poolGroup);
 
   // ---- exaggeration
   function setExag(k) {
@@ -212,6 +233,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
       a.needsUpdate = true;
     }
     model.position.y = M.house_base * (k - 1);
+    poolGroup.position.y = PL.ground * (k - 1);
     for (const L of labels) L.y = L.g * k + L.dy;
   }
 
@@ -225,8 +247,8 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   }
   for (const e of site.edges) addLabel(e.label, e.p[0], e.p[1], 1.2, -e.p[2], "edge");
   addLabel("House", hc[0], M.house_base, 6.5, -hc[1]);
-  const pc = M.water.reduce((a, p) => [a[0] + p[0], a[1] + p[2]], [0, 0]).map((v) => v / M.water.length);
-  addLabel("Pool", pc[0], M.house_base, 2, -pc[1]);
+  const pc = M.pool.water.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0]).map((v) => v / M.pool.water.length);
+  addLabel("Pool (as built)", pc[0], M.pool.ground, 2, -pc[1]);
   addLabel("Mancini Drive", 62, 0.9, 1.5, 8);
   const v3 = new THREE.Vector3();
   function placeLabels() {
