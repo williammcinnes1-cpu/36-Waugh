@@ -100,6 +100,8 @@ def main():
 
     # boundary with edge lengths
     d.line([P(*c) for c in lot.exterior.coords], fill=(235, 30, 30, 255), width=5)
+    inner = lot.buffer(-10, join_style="mitre")                                  # 10 m inside the boundary
+    d.line([P(*c) for c in inner.exterior.coords], fill=(40, 120, 255, 255), width=4)
     cs_ = list(lot.exterior.coords)
     for (a, b), (c, e_) in zip(cs_[:-1], cs_[1:]):
         L = math.hypot(c - a, e_ - b)
@@ -144,7 +146,7 @@ def main():
         s.text((x0 + 150, y), v, font=F(15), fill=(40, 40, 40)); y += 26
     y += 16
     for col, txt, w in (((235, 30, 30), "Lot boundary (cadastre)", 5), ((255, 140, 0), "1 m contour (m AHD)", 3),
-                        ((255, 200, 110), "0.25 m contour", 1), ((255, 255, 255), "House from House.IGS", 3)):
+                        ((255, 200, 110), "0.25 m contour", 1), ((40, 120, 255), "10 m inside the boundary", 4), ((255, 255, 255), "House from House.IGS", 3)):
         s.rectangle([x0, y + 6, x0 + 40, y + 14], fill=(110, 120, 100))
         s.line([(x0, y + 10), (x0 + 40, y + 10)], fill=col, width=w)
         s.text((x0 + 52, y), txt, font=F(15), fill=(40, 40, 40)); y += 26

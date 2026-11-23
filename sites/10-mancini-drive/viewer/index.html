@@ -1,0 +1,285 @@
+<title>10 Mancini Drive 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: full-bleed 3D survey view; a compact field-card panel top-left, view buttons along the bottom edge */
+:root {
+  --bg: #e7edf1; --panel: rgba(250, 251, 249, 0.94); --ink: #1d2a2f; --muted: #56656b; --line: #c9d3d6;
+  --accent: #1f6fd1; --boundary: #d62a24; --btn: #ffffff; --btn-on: #1d2a2f; --btn-on-ink: #ffffff;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11181b; --panel: rgba(22, 30, 33, 0.92); --ink: #e6edee; --muted: #9db0b5; --line: #33444a;
+  --accent: #6aa8ff; --boundary: #ff5a50; --btn: #1e2a2e; --btn-on: #e6edee; --btn-on-ink: #11181b; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11181b; --panel: rgba(22, 30, 33, 0.92); --ink: #e6edee; --muted: #9db0b5; --line: #33444a;
+  --accent: #6aa8ff; --boundary: #ff5a50; --btn: #1e2a2e; --btn-on: #e6edee; --btn-on-ink: #11181b; color-scheme: dark }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); overflow: hidden; }
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.card {
+  position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: max(12px, env(safe-area-inset-left, 0px));
+  width: min(300px, calc(100vw - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12); backdrop-filter: blur(6px);
+}
+.card summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.card summary::-webkit-details-marker { display: none; }
+.card h1 { font-size: 17px; margin: 0; font-weight: 600; text-wrap: balance; }
+.card .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.card .chev { font-size: 12px; color: var(--muted); }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 12px 0 10px; font-size: 13px; }
+dt { color: var(--muted); }
+dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 0; }
+.key { display: grid; gap: 6px; font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.key label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.swatch { width: 22px; height: 4px; border-radius: 2px; flex: none; }
+.note { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.45; }
+.views {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 24px);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px;
+}
+.views button {
+  font: 500 13px var(--sans); color: var(--ink); background: var(--btn); border: 1px solid var(--line);
+  border-radius: 999px; padding: 7px 13px; cursor: pointer;
+}
+.views button[aria-pressed="true"] { background: var(--btn-on); color: var(--btn-on-ink); border-color: var(--btn-on); }
+.views button:focus-visible, .key input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lbl {
+  position: fixed; left: 0; top: 0; pointer-events: none; font: 600 12px var(--sans); color: #fff; white-space: nowrap;
+  text-shadow: 0 0 3px #000, 0 0 6px rgba(0, 0, 0, 0.7); transform: translate(-50%, -50%);
+}
+.lbl.edge { font-family: var(--mono); font-size: 11px; }
+.credit {
+  position: fixed; right: max(10px, env(safe-area-inset-right, 0px)); bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  font-size: 10.5px; color: #fff; text-shadow: 0 0 3px #000; text-align: right; max-width: 60vw;
+}
+#status { position: fixed; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted); pointer-events: none; }
+@media (max-width: 560px) { .credit { bottom: calc(108px + env(safe-area-inset-bottom, 0px)); } }
+</style>
+
+<div id="stage"></div>
+<div id="status">Loading site…</div>
+<div id="labels"></div>
+
+<details class="card" id="card" open>
+  <summary><div><h1>10 Mancini Drive</h1><div class="sub">Lake Wyangan NSW 2680 · Lot 5 DP285693</div></div><span class="chev">details</span></summary>
+  <dl>
+    <dt>Lot area</dt><dd>≈8,029 m² (0.80 ha)</dd>
+    <dt>Zoning</dt><dd>R5 Large Lot Residential</dd>
+    <dt>Ground</dt><dd id="f-ground">–</dd>
+    <dt>Fall</dt><dd id="f-fall">–</dd>
+    <dt>House / pool</dt><dd>from House.IGS</dd>
+  </dl>
+  <div class="key">
+    <label><span class="swatch" style="background: var(--boundary)"></span>Lot boundary</label>
+    <label><input type="checkbox" id="t-inner" checked> <span class="swatch" style="background: #2f7bff"></span>10 m inside the boundary</label>
+    <label><input type="checkbox" id="t-contours" checked> <span class="swatch" style="background: #ff9a1f"></span>0.25 m contours</label>
+    <label><input type="checkbox" id="t-exag"> Exaggerate levels ×5 (block is nearly flat)</label>
+  </div>
+  <div class="note">Drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan. Levels from the NSW 5 m elevation grid, indicative only. Aerial Feb 2014. House and pool fitted to the roof in the aerial.</div>
+</details>
+
+<div class="views" role="group" aria-label="Camera views">
+  <button id="v-over" aria-pressed="true">Overview</button>
+  <button id="v-road">From the road</button>
+  <button id="v-yard">Pool side</button>
+  <button id="v-top">Plan</button>
+</div>
+<div class="credit">Imagery, cadastre and elevation © State of New South Wales (Spatial Services), CC BY 4.0</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(async function () {
+  const status = document.getElementById("status");
+  let site;
+  try { site = await (await fetch("site.json")).json(); }
+  catch (e) { status.textContent = "Could not load the site data. Reload the page to try again."; return; }
+  const F = site.facts;
+  document.getElementById("f-ground").textContent = `${F.lot_min.toFixed(1)}–${F.lot_max.toFixed(1)} m AHD`;
+  document.getElementById("f-fall").textContent = `≈${F.plane_slope_pct.toFixed(1)}% to WSW`;
+  try { if (window.matchMedia("(max-width: 560px)").matches) document.getElementById("card").open = false; } catch (e) {}
+
+  const stage = document.getElementById("stage");
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(stage.clientWidth, stage.clientHeight);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xcfe2ef);
+  scene.fog = new THREE.Fog(0xcfe2ef, 260, 520);
+  const camera = new THREE.PerspectiveCamera(42, stage.clientWidth / stage.clientHeight, 0.5, 2000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.maxPolarAngle = Math.PI * 0.495;
+  controls.minDistance = 6; controls.maxDistance = 400;
+
+  scene.add(new THREE.HemisphereLight(0xf2f6ff, 0x8a8268, 0.75));
+  const sun = new THREE.DirectionalLight(0xfff1dc, 0.85);
+  sun.position.set(-60, 90, 40);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 10, far: 300 });
+  sun.shadow.bias = -0.0004;
+  scene.add(sun);
+
+  // ---- terrain
+  const T = site.terrain, cols = T.xs.length, rows = T.ns.length, ext = T.extent;
+  const tg = new THREE.BufferGeometry();
+  const tpos = new Float32Array(cols * rows * 3), tuv = new Float32Array(cols * rows * 2);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const i = r * cols + c;
+    tpos.set([T.xs[c], T.h[i], -T.ns[r]], i * 3);
+    tuv.set([(T.xs[c] - ext[0]) / (ext[1] - ext[0]), (T.ns[r] - ext[2]) / (ext[3] - ext[2])], i * 2);
+  }
+  const tidx = [];
+  for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
+    const a = r * cols + c, b = a + 1, d = a + cols, e = d + 1;
+    tidx.push(a, d, b, b, d, e);
+  }
+  tg.setAttribute("position", new THREE.BufferAttribute(tpos, 3));
+  tg.setAttribute("uv", new THREE.BufferAttribute(tuv, 2));
+  tg.setIndex(tidx);
+  tg.computeVertexNormals();
+  const tex = await new Promise((res) => new THREE.TextureLoader().load("aerial.jpg", res, undefined, () => res(null)));
+  if (tex) { tex.encoding = THREE.sRGBEncoding; tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); }
+  const terrain = new THREE.Mesh(tg, new THREE.MeshLambertMaterial({ map: tex, color: tex ? 0xffffff : 0x9fae86 }));
+  terrain.receiveShadow = true;
+  scene.add(terrain);
+  const baseH = Float32Array.from(T.h);
+
+  // ---- ribbons draped on the ground (lines in WebGL are 1 px, so draw flat strips)
+  function ribbon(pts, width, color, lift) {
+    const pos = [], idx = [];
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i], q = pts[Math.min(i + 1, pts.length - 1)], o = pts[Math.max(i - 1, 0)];
+      let dx = q[0] - o[0], dz = -(q[2] - o[2]);
+      const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
+      const nx = -dz * width / 2, nz = dx * width / 2;
+      pos.push(p[0] + nx, p[1] + lift, -p[2] + nz, p[0] - nx, p[1] + lift, -p[2] - nz);
+      if (i < pts.length - 1) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 }));
+    m.userData.base = Float32Array.from(pos); m.userData.lift = lift;
+    return m;
+  }
+  const boundary = ribbon(site.boundary, 0.55, 0xd62a24, 0.12);
+  const inner = ribbon(site.inner10, 0.45, 0x2f7bff, 0.12);
+  scene.add(boundary, inner);
+  const contourGroup = new THREE.Group();
+  for (const c of site.contours) contourGroup.add(ribbon(c.pts, c.major ? 0.25 : 0.14, c.major ? 0xff8a00 : 0xffb84d, 0.06));
+  scene.add(contourGroup);
+
+  // ---- house and pool from House.IGS
+  const M = site.model;
+  const mg = new THREE.BufferGeometry();
+  const mpos = new Float32Array(M.pos.length);
+  for (let i = 0; i < M.pos.length; i += 3) { mpos[i] = M.pos[i]; mpos[i + 1] = M.pos[i + 1]; mpos[i + 2] = -M.pos[i + 2]; }
+  const cols3 = [new THREE.Color(0xeee8dc), new THREE.Color(0x8f969c), new THREE.Color(0x3b8cc6)];
+  const mcol = new Float32Array(M.pos.length);
+  M.kind.forEach((k, t) => { for (let v = 0; v < 3; v++) mcol.set([cols3[k].r, cols3[k].g, cols3[k].b], (t * 3 + v) * 3); });
+  mg.setAttribute("position", new THREE.BufferAttribute(mpos, 3));
+  mg.setAttribute("color", new THREE.BufferAttribute(mcol, 3));
+  mg.computeVertexNormals();
+  const model = new THREE.Group();
+  const house = new THREE.Mesh(mg, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+  house.castShadow = true; house.receiveShadow = true;
+  model.add(house);
+  const wg = new THREE.BufferGeometry();
+  wg.setAttribute("position", new THREE.Float32BufferAttribute(M.water.flatMap((p) => [p[0], p[1], -p[2]]), 3));
+  wg.computeVertexNormals();
+  model.add(new THREE.Mesh(wg, new THREE.MeshPhongMaterial({ color: 0x4fb3e8, transparent: true, opacity: 0.85, shininess: 90, side: THREE.DoubleSide })));
+  scene.add(model);
+
+  // ---- exaggeration
+  function setExag(k) {
+    const p = tg.attributes.position;
+    for (let i = 0; i < baseH.length; i++) p.setY(i, baseH[i] * k);
+    p.needsUpdate = true; tg.computeVertexNormals();
+    for (const m of [boundary, inner, ...contourGroup.children]) {
+      const b = m.userData.base, a = m.geometry.attributes.position, lift = m.userData.lift;
+      for (let i = 0; i < a.count; i++) a.setY(i, (b[i * 3 + 1] - lift) * k + lift);
+      a.needsUpdate = true;
+    }
+    model.position.y = M.house_base * (k - 1);
+    for (const L of labels) L.y = L.g * k + L.dy;
+  }
+
+  // ---- labels
+  const hc = site.house_centre;
+  const labels = [];
+  const host = document.getElementById("labels");
+  function addLabel(text, x, g, dy, z, cls) {
+    const el = document.createElement("div"); el.className = "lbl" + (cls ? " " + cls : ""); el.textContent = text; host.appendChild(el);
+    labels.push({ el, x, y: g + dy, z, g, dy });
+  }
+  for (const e of site.edges) addLabel(e.label, e.p[0], e.p[1], 1.2, -e.p[2], "edge");
+  addLabel("House", hc[0], M.house_base, 6.5, -hc[1]);
+  const pc = M.water.reduce((a, p) => [a[0] + p[0], a[1] + p[2]], [0, 0]).map((v) => v / M.water.length);
+  addLabel("Pool", pc[0], M.house_base, 2, -pc[1]);
+  addLabel("Mancini Drive", 62, 0.9, 1.5, 8);
+  const v3 = new THREE.Vector3();
+  function placeLabels() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    for (const L of labels) {
+      v3.set(L.x, L.y, L.z).project(camera);
+      const vis = v3.z < 1 && Math.abs(v3.x) < 1.1 && Math.abs(v3.y) < 1.1;
+      L.el.hidden = !vis;
+      if (vis) L.el.style.transform = `translate(${(v3.x + 1) / 2 * w}px, ${(1 - v3.y) / 2 * h}px) translate(-50%, -50%)`;
+    }
+  }
+
+  // ---- views
+  const tgt = new THREE.Vector3(hc[0], M.house_base + 1, -hc[1]);
+  const VIEWS = {
+    "v-over": { eye: [hc[0] + 70, 60, -hc[1] + 85], at: [hc[0] - 4, 0, -hc[1] + 4] },
+    "v-road": { eye: [hc[0] + 62, 1.8, -hc[1] + 14], at: [hc[0], 2, -hc[1]] },
+    "v-yard": { eye: [pc[0] - 22, 4, -pc[1] - 20], at: [hc[0] + 4, 1.2, -hc[1]] },
+    "v-top": { eye: [0.01, 170, 0.01], at: [0, 0, 0] },
+  };
+  let anim = null;
+  function go(id) {
+    const v = VIEWS[id];
+    document.querySelectorAll(".views button").forEach((b) => b.setAttribute("aria-pressed", String(b.id === id)));
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const from = { eye: camera.position.clone(), at: controls.target.clone() };
+    const to = { eye: new THREE.Vector3(...v.eye), at: new THREE.Vector3(...v.at) };
+    if (reduce || !camera.position.lengthSq()) { camera.position.copy(to.eye); controls.target.copy(to.at); controls.update(); return; }
+    anim = { from, to, t0: performance.now() };
+  }
+  Object.keys(VIEWS).forEach((id) => document.getElementById(id).addEventListener("click", () => go(id)));
+  go("v-over");
+
+  document.getElementById("t-inner").addEventListener("change", (e) => { inner.visible = e.target.checked; });
+  document.getElementById("t-contours").addEventListener("change", (e) => { contourGroup.visible = e.target.checked; });
+  document.getElementById("t-exag").addEventListener("change", (e) => setExag(e.target.checked ? 5 : 1));
+
+  window.addEventListener("resize", () => {
+    camera.aspect = stage.clientWidth / stage.clientHeight; camera.updateProjectionMatrix();
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+  });
+  status.hidden = true;
+  (function loop(now) {
+    if (anim) {
+      const t = Math.min(1, (now - anim.t0) / 900), s = t * t * (3 - 2 * t);
+      camera.position.lerpVectors(anim.from.eye, anim.to.eye, s);
+      controls.target.lerpVectors(anim.from.at, anim.to.at, s);
+      if (t >= 1) anim = null;
+    }
+    controls.update();
+    renderer.render(scene, camera);
+    placeLabels();
+    requestAnimationFrame(loop);
+  })(performance.now());
+})();
+</script>

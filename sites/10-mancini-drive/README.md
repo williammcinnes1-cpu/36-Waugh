@@ -31,3 +31,8 @@ The pool is not in the 2014 imagery (built later or proposed).
 ## Files
 - `site_plan.png`: aerial, boundary with lengths, contours, spot heights, house and pool.
 - `scripts/fetch.py`: tiles, DEM, contours, imagery date. `scripts/site_plan.py`: the plan. `scripts/common.py`: helpers.
+
+## 3D viewer
+`viewer/index.html` (with `viewer/site.json` and `viewer/aerial.jpg`, built by `scripts/build_viewer.py` from the gmsh
+mesh of House.IGS): terrain draped with the aerial, lot boundary (red), a line 10 m inside the boundary (blue),
+0.25 m contours, and the house and pool. Published privately at https://claude.ai/artifact/WRS6y62avyobSXoHSsqBj3.
