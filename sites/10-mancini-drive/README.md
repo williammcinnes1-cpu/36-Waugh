@@ -37,11 +37,13 @@ The pool is not in the 2014 imagery (built later or proposed).
 mesh of House.IGS): terrain draped with the aerial, lot boundary (red), a line 10 m inside the boundary (blue),
 0.25 m contours, and the house and pool. Published privately at https://claude.ai/artifact/WRS6y62avyobSXoHSsqBj3.
 
-## Pool as built
-The IGES pool position did not match the pool as built. The as-built pool and paved surround were traced from a recent
-Google Maps screenshot supplied by the client, registered to the NSW aerial with four tie points (house east end
-corners, cross-wing corner, driveway crossover; residuals 0.7–2.1 m): water ≈12.0 × 4.6 m, surround ≈15.2 × 10.0 m
-(`data/pool_asbuilt.json`, `data/google_to_mga.json`). Positional accuracy is about ±2 m.
+## Pool, pavers and planned pool house (from House.IGS)
+All taken from House.IGS and placed with the same fit as the house (`data/model_plan.json`, `data/model_to_mga.json`):
+pool 12.0 × 4.4 m with a 4.4 × 2.4 m step-out (≈1.9 m deep); pavers 15.8 × 9.844 m as dimensioned on the client's
+drawing (Pool-House.PDF; pool set 1.6 m in from the pavers); a 0.32 × 10.0 m wall, 1.55 m high, on the pavers'
+north-east end; and the planned pool house slab, 15.8 × 6.1 m, on the far side of the pool from the house, about
+2.0 m from the pavers and 10.1 m from the north boundary (just inside the 10 m line). A Google Maps trace tried
+earlier was discarded at the client's request.
 
 ## Known issue: house roof
 House.IGS has walls, eaves and a flat ceiling but no roof surfaces, so the viewer shows the house without its hipped

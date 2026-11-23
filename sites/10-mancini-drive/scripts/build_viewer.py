@@ -135,9 +135,9 @@ def main(tris_path):
     from shapely.geometry import shape
     from shapely import affinity
     from shapely.ops import triangulate
-    PB = json.load(open(DATA / "pool_asbuilt.json"))
-    pg, sg = shape(PB["water"]), shape(PB["surround"])
-    pool_ground = zat(pg.centroid.x, pg.centroid.y)
+    put = lambda k: affinity.translate(affinity.rotate(shape(M[k]), tf["rotation_deg"], origin=(0, 0)), tf["tx"], tf["ty"])
+    pg, sg, phg, wg_ = put("pool"), put("pavers"), put("poolhouse"), put("wall")     # all from House.IGS
+    pool_ground = HOUSE_BASE                                    # model ground level (y = 0)
     ring = lambda g: [[round(x - E0, 2), round(yy - N0, 2)] for x, yy in list(g.exterior.coords)[:-1]]
     wpos = []
 
@@ -145,7 +145,8 @@ def main(tris_path):
         "origin": {"E": E0, "N": N0, "H": H0, "crs": "GDA2020 / MGA zone 55 (EPSG:7855)"},
         "terrain": {"xs": xs, "ns": ns, "h": heights, "extent": [e_min - E0, e_min + size - E0, n_max - size - N0, n_max - N0]},
         "boundary": bnd, "inner10": inner, "edges": edges, "contours": contours,
-        "model": {"pos": [round(float(v), 3) for v in pos.ravel()], "kind": [int(k) for k in kind], "water": wpos, "pool": {"water": ring(pg), "surround": ring(sg), "ground": round(pool_ground - H0, 3)},
+        "model": {"pos": [round(float(v), 3) for v in pos.ravel()], "kind": [int(k) for k in kind], "water": wpos, "pool": {"water": ring(pg), "surround": ring(sg), "ground": round(pool_ground - H0, 3),
+                           "poolhouse": ring(phg), "wall": ring(wg_)},
                   "house_base": HOUSE_BASE - H0},
         "facts": json.load(open(DATA / "levels.json")),
         "house_centre": [round(float(e.mean()) - E0, 2), round(float(n.mean()) - N0, 2)],
