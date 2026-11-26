@@ -91,7 +91,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     <dt>Fall</dt><dd id="f-fall">–</dd>
     <dt>House</dt><dd>from House.IGS</dd>
     <dt>Pool</dt><dd>12.0 × 4.4 m, pavers 15.8 × 9.844 m</dd>
-    <dt>Pool house</dt><dd>planned 15.8 × 6.1 m</dd>
+    <dt>Pool house</dt><dd>planned 15.8 × 6.1 m, 3.5 m high</dd>
   </dl>
   <div class="key">
     <label><span class="swatch" style="background: var(--boundary)"></span>Lot boundary</label>
@@ -99,7 +99,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     <label><input type="checkbox" id="t-contours" checked> <span class="swatch" style="background: #ff9a1f"></span>0.25 m contours</label>
     <label><input type="checkbox" id="t-exag"> Exaggerate levels ×5 (block is nearly flat)</label>
   </div>
-  <div class="note">Drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan. Levels from the NSW 5 m elevation grid, indicative only. Aerial Feb 2014. House, pool, pavers and planned pool house from House.IGS, placed by fitting the house to the roof in the aerial. The yellow box is the pool house footprint at an assumed 3 m height.</div>
+  <div class="note">Drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan. Levels from the NSW 5 m elevation grid, indicative only. Aerial Feb 2014. House, pool, pavers and planned pool house from House.IGS, placed by fitting the house to the roof in the aerial. The yellow box is the pool house footprint at 3.5 m high.</div>
 </details>
 
 <section class="sunbox" aria-label="Sun and shadows">
@@ -266,7 +266,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   const wallM = prism(PL.wall, pg0, pg0 + 1.55, new THREE.MeshLambertMaterial({ color: 0x4a4d50 }));
   wallM.castShadow = true; poolGroup.add(wallM);
   poolGroup.add(prism(PL.poolhouse, pg0, pg0 + 0.07, new THREE.MeshLambertMaterial({ color: 0xd8d2c4 })));
-  const ghost = prism(PL.poolhouse, pg0 + 0.07, pg0 + 3.0, new THREE.MeshLambertMaterial({ color: 0xffc845, transparent: true, opacity: 0.35, depthWrite: false }));
+  const ghost = prism(PL.poolhouse, pg0 + 0.07, pg0 + 3.5, new THREE.MeshLambertMaterial({ color: 0xffc845, transparent: true, opacity: 0.35, depthWrite: false }));
   ghost.castShadow = true;
   poolGroup.add(ghost);
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(ghost.geometry), new THREE.LineBasicMaterial({ color: 0xe0a000 }));
@@ -302,7 +302,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   addLabel("House", hc[0], M.house_base, 6.5, -hc[1]);
   const pc = M.pool.water.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0]).map((v) => v / M.pool.water.length);
   addLabel("Pool", pc[0], M.pool.ground, 2, -pc[1]);
-  addLabel("Planned pool house 15.8 × 6.1 m", phc[0], M.pool.ground, 3.6, -phc[1]);
+  addLabel("Planned pool house 15.8 × 6.1 m", phc[0], M.pool.ground, 4.1, -phc[1]);
   addLabel("Mancini Drive", 62, 0.9, 1.5, 8);
   const v3 = new THREE.Vector3();
   function placeLabels() {
@@ -388,9 +388,9 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     sun.intensity = el > 0 ? 0.35 + 0.6 * Math.min(1, el / 25) : 0;
     if (hemi) hemi.intensity = el > 0 ? 0.55 + 0.25 * Math.min(1, el / 30) : 0.35;
     const comp = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(az / 45) % 8];
-    const len = el > 0.5 ? (3.0 / Math.tan(el * rad)) : Infinity;
+    const len = el > 0.5 ? (3.5 / Math.tan(el * rad)) : Infinity;
     document.getElementById("sunread").textContent = el > 0
-      ? `Sun ${el.toFixed(0)}° up from the ${comp} (${az.toFixed(0)}°). A 3 m wall casts a ${len < 100 ? len.toFixed(1) + " m" : "very long"} shadow.`
+      ? `Sun ${el.toFixed(0)}° up from the ${comp} (${az.toFixed(0)}°). The 3.5 m pool house casts a ${len < 100 ? len.toFixed(1) + " m" : "very long"} shadow.`
       : "Sun is below the horizon.";
   }
   sDay.addEventListener("input", updateSun); sTime.addEventListener("input", updateSun);
