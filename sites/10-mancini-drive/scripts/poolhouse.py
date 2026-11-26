@@ -22,6 +22,9 @@ SLAB = 0.07                           # slab top above ground
 EAVE = 2.55                           # wall plate height above the slab
 PITCH = math.radians(15)
 OVER = 0.45                           # eave overhang
+GABLE_U, GABLE_W = 7.55, 6.0          # through-gable over the bar, centred on the pool (u of the pool centre), 6 m wide
+GABLE_PITCH = math.radians(30)        # steeper feature gable
+CEIL_PITCH = math.radians(15)         # scissor truss: raked ceiling at half the roof pitch
 T = 0.15                              # wall thickness
 
 L_POLY = [(-WING_DEPTH, WING_V0), (0.0, WING_V0), (0.0, BAR[2]), (BAR[1], BAR[2]), (BAR[1], BAR[3]), (-WING_DEPTH, BAR[3])]
@@ -107,42 +110,52 @@ def build():
                 m.box("frame", c0, e * 0.06, inward * 0.3, z0, z1)
             for zz in (z0, z1 - 0.06):
                 m.box("frame", p + e * s0 + inward * 0.35, e * (s1 - s0), inward * 0.3, zz, zz + 0.06)
-    # hipped roof: two overlapping rectangles (bar run through the corner, and the wing); roof = max of the two
-    rects = [(-WING_DEPTH - OVER, BAR[1] + OVER, BAR[2] - OVER, BAR[3] + OVER),
-             (-WING_DEPTH - OVER, OVER, WING_V0 - OVER, BAR[3] + OVER)]
+    # roof: hipped bar (run through the corner) and hipped wing, plus a steeper through-gable over the middle of the bar,
+    # centred on the pool. Each unit's roof is the lowest of its planes inside its rectangle; the combined roof is the
+    # highest unit at each point, which gives the hips, the valleys and the gable meeting the hips properly.
     tp = math.tan(PITCH)
     ze = EAVE - OVER * tp
+    gu0, gu1 = GABLE_U - GABLE_W / 2, GABLE_U + GABLE_W / 2
+    tg = math.tan(GABLE_PITCH)
 
-    def faces(r):
+    def plane(ax, c, sgn, t):
+        return (ax, c, sgn, t)
+
+    def zf(pl):
+        ax, c, sgn, t = pl
+        z0 = EAVE - OVER * t
+        return (lambda x, y: z0 + t * sgn * ((x if ax == "u" else y) - c))
+
+    def hip_unit(r):
         u0, u1, v0, v1 = r
         h = min(u1 - u0, v1 - v0) / 2
         if (u1 - u0) >= (v1 - v0):
             A, B = (u0 + h, (v0 + v1) / 2), (u1 - h, (v0 + v1) / 2)
-            F = [([(u0, v0), (u1, v0), B, A], ("v", v0, 1)), ([(u1, v1), (u0, v1), A, B], ("v", v1, -1)),
-                 ([(u0, v1), (u0, v0), A], ("u", u0, 1)), ([(u1, v0), (u1, v1), B], ("u", u1, -1))]
+            F = [([(u0, v0), (u1, v0), B, A], plane("v", v0, 1, tp)), ([(u1, v1), (u0, v1), A, B], plane("v", v1, -1, tp)),
+                 ([(u0, v1), (u0, v0), A], plane("u", u0, 1, tp)), ([(u1, v0), (u1, v1), B], plane("u", u1, -1, tp))]
         else:
             A, B = ((u0 + u1) / 2, v0 + h), ((u0 + u1) / 2, v1 - h)
-            F = [([(u1, v0), (u1, v1), B, A], ("u", u1, -1)), ([(u0, v1), (u0, v0), A, B], ("u", u0, 1)),
-                 ([(u0, v0), (u1, v0), A], ("v", v0, 1)), ([(u1, v1), (u0, v1), B], ("v", v1, -1))]
-        return [(Polygon(f), pl) for f, pl in F]
+            F = [([(u1, v0), (u1, v1), B, A], plane("u", u1, -1, tp)), ([(u0, v1), (u0, v0), A, B], plane("u", u0, 1, tp)),
+                 ([(u0, v0), (u1, v0), A], plane("v", v0, 1, tp)), ([(u1, v1), (u0, v1), B], plane("v", v1, -1, tp))]
+        return box(u0, v0, u1, v1), [(Polygon(f), pl) for f, pl in F]
 
-    def zf(pl):
-        ax, c, sgn = pl
-        return (lambda x, y: ze + tp * sgn * ((x if ax == "u" else y) - c))
+    def gable_unit(r):
+        u0, u1, v0, v1 = r
+        um = (u0 + u1) / 2
+        return box(u0, v0, u1, v1), [(Polygon([(u0, v0), (um, v0), (um, v1), (u0, v1)]), plane("u", u0, 1, tg)),
+                                     (Polygon([(um, v0), (u1, v0), (u1, v1), (um, v1)]), plane("u", u1, -1, tg))]
 
     def higher(pl_other, pl_self, bound):
-        """region of `bound` where plane pl_other is above plane pl_self (a half-plane, clipped)"""
+        """part of a box around `bound` where plane pl_other is above plane pl_self (half-plane clip)"""
         zo, zs = zf(pl_other), zf(pl_self)
-        # linear function f = zo - zs; sample to get its gradient
         f0 = zo(0, 0) - zs(0, 0); fu = zo(1, 0) - zs(1, 0) - f0; fv = zo(0, 1) - zs(0, 1) - f0
         x0, y0, x1, y1 = bound.bounds
         big = box(x0 - 5, y0 - 5, x1 + 5, y1 + 5)
         if abs(fu) < 1e-12 and abs(fv) < 1e-12:
             return big if f0 > 0 else Polygon()
-        # clip big box to f > 0 (Sutherland-Hodgman against one line)
         pts = list(big.exterior.coords)[:-1]
         out = []
-        val = lambda p: f0 + fu * p[0] + fv * p[1]
+        val = lambda q: f0 + fu * q[0] + fv * q[1]
         for k in range(len(pts)):
             P, Q = pts[k], pts[(k + 1) % len(pts)]
             vp, vq = val(P), val(Q)
@@ -151,27 +164,57 @@ def build():
                 t = vp / (vp - vq); out.append((P[0] + t * (Q[0] - P[0]), P[1] + t * (Q[1] - P[1])))
         return Polygon(out) if len(out) >= 3 else Polygon()
 
-    FR = [faces(r) for r in rects]
-    RB = [box(r[0], r[2], r[1], r[3]) for r in rects]
-    for idx in range(2):
-        other = 1 - idx
-        for F, pl in FR[idx]:
-            cover = RB[other]
-            for G, gl in FR[other]:
-                cover = cover.intersection(higher(gl, pl, RB[other]))
-            vis = F.difference(cover).buffer(0)
+    units = [hip_unit((-WING_DEPTH - OVER, BAR[1] + OVER, BAR[2] - OVER, BAR[3] + OVER)),
+             hip_unit((-WING_DEPTH - OVER, OVER, WING_V0 - OVER, BAR[3] + OVER)),
+             gable_unit((gu0 - OVER, gu1 + OVER, BAR[2] - OVER, BAR[3] + OVER))]
+    for i, (Ri, Fi) in enumerate(units):
+        for F, pl in Fi:
+            vis = F
+            for j, (Rj, Fj) in enumerate(units):
+                if j == i or not Rj.intersects(F):
+                    continue
+                cover = Rj
+                for G, gl in Fj:
+                    cover = cover.intersection(higher(gl, pl, Rj))
+                vis = vis.difference(cover)
+            vis = vis.buffer(0)
             for part in getattr(vis, "geoms", [vis]):
                 if part.geom_type == "Polygon" and part.area > 1e-4:
                     m.poly("roof", list(part.exterior.coords)[:-1], zf(pl))
-    outer = RB[0].union(RB[1])
+    outer = units[0][0].union(units[1][0])
     oc = list(outer.exterior.coords)
-    for (a, b), (c, d) in zip(oc[:-1], oc[1:]):                       # fascia
-        m.quad("fascia", (a, b, ze - 0.2), (c, d, ze - 0.2), (c, d, ze), (a, b, ze))
+    for (a_, b_), (c_, d_) in zip(oc[:-1], oc[1:]):                   # fascia along the hip eaves
+        m.quad("fascia", (a_, b_, ze - 0.2), (c_, d_, ze - 0.2), (c_, d_, ze), (a_, b_, ze))
     soff = outer.difference(Lg)
     for part in getattr(soff, "geoms", [soff]):                        # eave lining
         m.poly("soffit", list(part.exterior.coords)[:-1], ze - 0.2, flip=True)
-    # ceiling at the wall plate (seen through the glass)
-    m.poly("soffit", L_POLY, EAVE, flip=True)
+    # gable ends: barge boards along the rakes, glazed triangle to the pool (up to the raked ceiling), clad above it
+    gm = GABLE_U
+    apex = EAVE + tg * GABLE_W / 2                                     # roof apex at the wall line
+    capex = EAVE + math.tan(CEIL_PITCH) * GABLE_W / 2                  # scissor-truss ceiling apex
+    for vw, glazed in ((BAR[2], True), (BAR[3], False)):
+        vb = vw - OVER if vw == BAR[2] else vw + OVER
+        zb0 = EAVE - OVER * tg
+        for (x0, z0), (x1, z1) in (((gu0 - OVER, zb0), (gm, apex + 0.0)), ((gm, apex), (gu1 + OVER, zb0))):
+            m.quad("fascia", (x0, vb, z0 - 0.22), (x1, vb, z1 - 0.22), (x1, vb, z1 + 0.02), (x0, vb, z0 + 0.02))
+        if glazed:
+            m.tri("glass", (gu0, vw, EAVE), (gu1, vw, EAVE), (gm, vw, capex))
+            m.tri("wall", (gu0, vw, EAVE), (gm, vw, apex), (gm, vw, capex))
+            m.tri("wall", (gm, vw, capex), (gm, vw, apex), (gu1, vw, EAVE))
+            for x in (gu0 + GABLE_W / 4, gm, gu1 - GABLE_W / 4):        # mullions in the gable glass
+                ztop = EAVE + math.tan(CEIL_PITCH) * min(x - gu0, gu1 - x)
+                m.box("frame", (x - 0.03, vw - 0.06), (0.06, 0), (0, 0.06), EAVE, ztop)
+            m.box("frame", (gu0, vw - 0.06), (GABLE_W, 0), (0, 0.06), EAVE - 0.04, EAVE + 0.04)
+        else:
+            m.tri("wall", (gu0, vw, EAVE), (gu1, vw, EAVE), (gm, vw, apex))
+    # ceilings: flat at the plate, except a scissor-truss raked ceiling under the gable
+    flat = Lg.difference(box(gu0, BAR[2], gu1, BAR[3]))
+    for part in getattr(flat, "geoms", [flat]):
+        m.poly("soffit", list(part.exterior.coords)[:-1], EAVE, flip=True)
+    tc = math.tan(CEIL_PITCH)
+    for x0, x1 in ((gu0, gm), (gm, gu1)):
+        z0 = EAVE + tc * min(x0 - gu0, gu1 - x0); z1 = EAVE + tc * min(x1 - gu0, gu1 - x1)
+        m.quad("soffit", (x0, BAR[2], z0), (x1, BAR[2], z1), (x1, BAR[3], z1), (x0, BAR[3], z0))
     # galley kitchen along the outer wall in the wing, with an island; 6-seat table
     m.box("cabinet", (-5.7, BAR[3] - T - 0.6), (5.4, 0), (0, 0.6), SLAB, SLAB + 0.86)
     m.box("bench", (-5.72, BAR[3] - T - 0.62), (5.44, 0), (0, 0.62), SLAB + 0.86, SLAB + 0.9)
@@ -192,8 +235,9 @@ def build():
                 for b in (-0.18, 0.16):
                     m.box("chair", (cu + a, tv + dv + b), (0.03, 0), (0, 0.03), SLAB, SLAB + 0.42)
     ridge = ze + tp * max(BAR[3] - BAR[2] + 2 * OVER, WING_DEPTH + 2 * OVER) / 2
+    ridge = max(ridge, EAVE + tg * GABLE_W / 2)
     info = {"footprint_m2": round(Lg.area, 1), "eave": EAVE, "pitch_deg": math.degrees(PITCH), "ridge": round(ridge, 2),
-            "bar": f"{BAR[1] - BAR[0]:.1f} x {BAR[3] - BAR[2]:.1f} m", "wing": f"{WING_DEPTH:.1f} x {BAR[3] - WING_V0:.2f} m"}
+            "bar": f"{BAR[1] - BAR[0]:.1f} x {BAR[3] - BAR[2]:.1f} m", "ceiling_peak": round(EAVE + math.tan(CEIL_PITCH) * GABLE_W / 2, 2), "wing": f"{WING_DEPTH:.1f} x {BAR[3] - WING_V0:.2f} m"}
     return m.k, Lg, info
 
 
