@@ -91,7 +91,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     <dt>Fall</dt><dd id="f-fall">–</dd>
     <dt>House</dt><dd>from House.IGS</dd>
     <dt>Pool</dt><dd>12.0 × 4.4 m, pavers 15.8 × 9.844 m</dd>
-    <dt>Pool house</dt><dd>planned 15.8 × 8.1 m, 3.5 m high</dd>
+    <dt>Pool house</dt><dd>L-shaped, ≈207 m²; hipped roof, ridge 3.6 m</dd>
   </dl>
   <div class="key">
     <label><span class="swatch" style="background: var(--boundary)"></span>Lot boundary</label>
@@ -99,7 +99,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     <label><input type="checkbox" id="t-contours" checked> <span class="swatch" style="background: #ff9a1f"></span>0.25 m contours</label>
     <label><input type="checkbox" id="t-exag"> Exaggerate levels ×5 (block is nearly flat)</label>
   </div>
-  <div class="note">Drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan. Levels from the NSW 5 m elevation grid, indicative only. Aerial Feb 2014. House, pool, pavers and planned pool house from House.IGS, placed by fitting the house to the roof in the aerial. The yellow box is the pool house footprint at 3.5 m high.</div>
+  <div class="note">Drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan. Levels from the NSW 5 m elevation grid, indicative only. Aerial Feb 2014. House, pool, pavers and planned pool house from House.IGS, placed by fitting the house to the roof in the aerial. The pool house wraps the south-west end of the pool: 15.8 × 8.1 m bar plus a 6.0 m wing, walls 2.55 m, 15° hipped roof, glass to the pool, outdoor kitchen and 6-seat table.</div>
 </details>
 
 <section class="sunbox" aria-label="Sun and shadows">
@@ -235,7 +235,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   model.add(house);
   scene.add(model);
 
-  // ---- pool as built (traced from the client's Google Maps image): paved surround, water, tiled shell
+  // ---- pool and pavers (House.IGS): paved surround, water, tiled shell
   const PL = M.pool, pg0 = PL.ground;
   const poolGroup = new THREE.Group();
   const shapeOf = (ring) => new THREE.Shape(ring.map((p) => new THREE.Vector2(p[0], p[1])));
@@ -246,7 +246,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     const m = new THREE.Mesh(g, mat); m.receiveShadow = true; return m;
   };
   poolGroup.add(flat(sur, pg0 + 0.08, new THREE.MeshLambertMaterial({ color: 0xe9e7df, side: THREE.DoubleSide })));
-  poolGroup.add(flat(shapeOf(PL.water), pg0 - 0.12, new THREE.MeshPhongMaterial({ color: 0x3fa9e0, transparent: true, opacity: 0.82, shininess: 90, side: THREE.DoubleSide })));
+  poolGroup.add(flat(shapeOf(PL.water), pg0 + 0.02, new THREE.MeshPhongMaterial({ color: 0x3fa9e0, transparent: true, opacity: 0.82, shininess: 90, side: THREE.DoubleSide })));
   poolGroup.add(flat(shapeOf(PL.water), pg0 - 1.9, new THREE.MeshLambertMaterial({ color: 0x2f7fb5, side: THREE.DoubleSide })));
   const shell = [];
   PL.water.forEach((p, i) => {
@@ -265,13 +265,32 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   };
   const wallM = prism(PL.wall, pg0, pg0 + 1.55, new THREE.MeshLambertMaterial({ color: 0x4a4d50 }));
   wallM.castShadow = true; poolGroup.add(wallM);
-  poolGroup.add(prism(PL.poolhouse, pg0, pg0 + 0.07, new THREE.MeshLambertMaterial({ color: 0xd8d2c4 })));
-  const ghost = prism(PL.poolhouse, pg0 + 0.07, pg0 + 3.5, new THREE.MeshLambertMaterial({ color: 0xffc845, transparent: true, opacity: 0.35, depthWrite: false }));
-  ghost.castShadow = true;
-  poolGroup.add(ghost);
-  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(ghost.geometry), new THREE.LineBasicMaterial({ color: 0xe0a000 }));
-  poolGroup.add(edges);
-  const phc = PL.poolhouse.reduce((a, p) => [a[0] + p[0] / 4, a[1] + p[1] / 4], [0, 0]);
+  // L-shaped pool house: hipped roof, glass, kitchen and table (built by scripts/poolhouse.py)
+  const PHM = {
+    slab: new THREE.MeshLambertMaterial({ color: 0xd8d4cc }),
+    wall: new THREE.MeshLambertMaterial({ color: 0xf1ede4 }),
+    glass: new THREE.MeshPhongMaterial({ color: 0x7fb2cf, transparent: true, opacity: 0.38, shininess: 120, depthWrite: false }),
+    frame: new THREE.MeshLambertMaterial({ color: 0x1f2224 }),
+    roof: new THREE.MeshLambertMaterial({ color: 0x5f6468 }),
+    fascia: new THREE.MeshLambertMaterial({ color: 0x2f3236 }),
+    soffit: new THREE.MeshLambertMaterial({ color: 0xf3f0ea }),
+    cabinet: new THREE.MeshLambertMaterial({ color: 0x8a6c52 }),
+    bench: new THREE.MeshLambertMaterial({ color: 0xe8e4dc }),
+    table: new THREE.MeshLambertMaterial({ color: 0x9b7653 }),
+    chair: new THREE.MeshLambertMaterial({ color: 0x2e2e2e }),
+  };
+  for (const [kind, arr] of Object.entries(PL.ph_mesh)) {
+    const g = new THREE.BufferGeometry();
+    const f = new Float32Array(arr.length);
+    for (let i = 0; i < arr.length; i += 3) { f[i] = arr[i]; f[i + 1] = arr[i + 1]; f[i + 2] = -arr[i + 2]; }
+    g.setAttribute("position", new THREE.BufferAttribute(f, 3));
+    g.computeVertexNormals();
+    const mat = PHM[kind] || PHM.wall; mat.side = THREE.DoubleSide;
+    const mesh = new THREE.Mesh(g, mat);
+    mesh.castShadow = kind !== "glass"; mesh.receiveShadow = kind !== "glass";
+    poolGroup.add(mesh);
+  }
+  const phc = PL.ph_centre, PHI = PL.ph_info;
   poolGroup.userData.ground = pg0;
   scene.add(poolGroup);
 
@@ -302,7 +321,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   addLabel("House", hc[0], M.house_base, 6.5, -hc[1]);
   const pc = M.pool.water.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0]).map((v) => v / M.pool.water.length);
   addLabel("Pool", pc[0], M.pool.ground, 2, -pc[1]);
-  addLabel("Planned pool house 15.8 × 8.1 m", phc[0], M.pool.ground, 4.1, -phc[1]);
+  addLabel("Pool house", phc[0], M.pool.ground, PHI.ridge + 0.7, -phc[1]);
   addLabel("Mancini Drive", 62, 0.9, 1.5, 8);
   const v3 = new THREE.Vector3();
   function placeLabels() {
@@ -388,9 +407,9 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     sun.intensity = el > 0 ? 0.35 + 0.6 * Math.min(1, el / 25) : 0;
     if (hemi) hemi.intensity = el > 0 ? 0.55 + 0.25 * Math.min(1, el / 30) : 0.35;
     const comp = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(az / 45) % 8];
-    const len = el > 0.5 ? (3.5 / Math.tan(el * rad)) : Infinity;
+    const len = el > 0.5 ? (PHI.ridge / Math.tan(el * rad)) : Infinity;
     document.getElementById("sunread").textContent = el > 0
-      ? `Sun ${el.toFixed(0)}° up from the ${comp} (${az.toFixed(0)}°). The 3.5 m pool house casts a ${len < 100 ? len.toFixed(1) + " m" : "very long"} shadow.`
+      ? `Sun ${el.toFixed(0)}° up from the ${comp} (${az.toFixed(0)}°). The pool house ridge (${PHI.ridge.toFixed(1)} m) casts a ${len < 100 ? len.toFixed(1) + " m" : "very long"} shadow.`
       : "Sun is below the horizon.";
   }
   sDay.addEventListener("input", updateSun); sTime.addEventListener("input", updateSun);

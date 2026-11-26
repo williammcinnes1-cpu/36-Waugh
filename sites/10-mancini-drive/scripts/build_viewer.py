@@ -135,9 +135,20 @@ def main(tris_path):
     from shapely.geometry import shape
     from shapely import affinity
     from shapely.ops import triangulate
+    from shapely.geometry import Point
     put = lambda k: affinity.translate(affinity.rotate(shape(M[k]), tf["rotation_deg"], origin=(0, 0)), tf["tx"], tf["ty"])
     pg, sg, phg, wg_ = put("pool"), put("pavers"), put("poolhouse"), put("wall")     # all from House.IGS
-    pool_ground = HOUSE_BASE                                    # model ground level (y = 0)
+    # pool area level: just above the highest DEM point under the pavers and pool house, so nothing sinks into the terrain
+    import poolhouse as PH
+    phk, ph_poly, ph_info = PH.build()
+    ph_world = PH.footprint_world()
+    area = sg.union(ph_world)
+    x0, y0, x1, y1 = area.bounds
+    samples = [zat(x, y) for x in np.arange(x0, x1, 0.5) for y in np.arange(y0, y1, 0.5) if area.contains(Point(x, y))]
+    pool_ground = max(HOUSE_BASE, max(samples) + 0.02)
+    phw = PH.to_world(phk, pool_ground)
+    ph_mesh = {k: [round(float(c), 3) for xyz in v for c in (xyz[0] - E0, xyz[2] - H0, xyz[1] - N0)] for k, v in phw.items()}
+    phc = ph_world.centroid
     ring = lambda g: [[round(x - E0, 2), round(yy - N0, 2)] for x, yy in list(g.exterior.coords)[:-1]]
     wpos = []
 
@@ -146,7 +157,8 @@ def main(tris_path):
         "terrain": {"xs": xs, "ns": ns, "h": heights, "extent": [e_min - E0, e_min + size - E0, n_max - size - N0, n_max - N0]},
         "boundary": bnd, "inner10": inner, "edges": edges, "contours": contours,
         "model": {"pos": [round(float(v), 3) for v in pos.ravel()], "kind": [int(k) for k in kind], "water": wpos, "pool": {"water": ring(pg), "surround": ring(sg), "ground": round(pool_ground - H0, 3),
-                           "poolhouse": ring(phg), "wall": ring(wg_)},
+                           "wall": ring(wg_), "ph_mesh": ph_mesh, "ph_info": ph_info,
+                           "ph_centre": [round(phc.x - E0, 2), round(phc.y - N0, 2)]},
                   "house_base": HOUSE_BASE - H0},
         "facts": json.load(open(DATA / "levels.json")),
         "house_centre": [round(float(e.mean()) - E0, 2), round(float(n.mean()) - N0, 2)],

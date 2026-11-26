@@ -33,6 +33,8 @@ def main():
     lot = lot_mga()
     house, pool, mlot, t, X = placed()                                          # all from House.IGS
     surround, poolhouse, wall = X["pavers"], X["poolhouse"], X["wall"]
+    import poolhouse as PH
+    poolhouse = PH.footprint_world()                                       # L-shaped pool house (scripts/poolhouse.py)
     dem = rasterio.open(DATA / "dem_1m.tif")
     Z = dem.read(1)
     tr = dem.transform
@@ -118,7 +120,7 @@ def main():
     d.polygon([P(*c) for c in poolhouse.exterior.coords], fill=(255, 220, 120, 110), outline=(255, 200, 60, 255))
     d.line([P(*c) for c in poolhouse.exterior.coords], fill=(255, 190, 40, 255), width=4)
     qx, qy = P(poolhouse.centroid.x, poolhouse.centroid.y)
-    d.text((qx, qy), "PLANNED POOL HOUSE\n15.8 × 8.1 m", font=F(14, True), fill="white", anchor="mm", align="center",
+    d.text((qx, qy), "POOL HOUSE (L)\n≈207 m², hipped roof", font=F(14, True), fill="white", anchor="mm", align="center",
            stroke_width=3, stroke_fill=(120, 80, 0))
     hx, hy = P(house.centroid.x, house.centroid.y)
     d.text((hx, hy), f"HOUSE\n(House.IGS, {house.area:.0f} m²)", font=F(15, True), fill="white", anchor="mm", align="center",
@@ -159,7 +161,7 @@ def main():
         s.line([(x0, y + 10), (x0 + 40, y + 10)], fill=col, width=w)
         s.text((x0 + 52, y), txt, font=F(15), fill=(40, 40, 40)); y += 26
     s.rectangle([x0, y + 2, x0 + 40, y + 18], fill=(40, 170, 230)); s.text((x0 + 52, y), "Pool and pavers (House.IGS)", font=F(15), fill=(40, 40, 40)); y += 26
-    s.rectangle([x0, y + 2, x0 + 40, y + 18], fill=(255, 220, 120), outline=(255, 190, 40), width=3); s.text((x0 + 52, y), "Planned pool house (House.IGS)", font=F(15), fill=(40, 40, 40)); y += 34
+    s.rectangle([x0, y + 2, x0 + 40, y + 18], fill=(255, 220, 120), outline=(255, 190, 40), width=3); s.text((x0 + 52, y), "Pool house, wrapping the pool end", font=F(15), fill=(40, 40, 40)); y += 34
     notes = ["House, pool, pavers and pool house from", "House.IGS, placed by fitting the house", f"footprint to the aerial roof (overlap {t['iou'] * 100:.0f}%,",
              f"rotation {t['rotation_deg']:.1f}°). The model's own lot outline",
              "lands on the cadastre within about a metre.", "",

@@ -48,3 +48,10 @@ earlier was discarded at the client's request.
 ## Known issue: house roof
 House.IGS has walls, eaves and a flat ceiling but no roof surfaces, so the viewer shows the house without its hipped
 roof. House.SLDPRT (SolidWorks native) cannot be read without SolidWorks; a STEP export (.step/.stp) is needed.
+
+## Pool house (L-shaped, client design brief)
+`scripts/poolhouse.py`: the IGES pool house bar (15.8 × 8.1 m, butting the pavers) plus a 6.0 × 13.05 m wing wrapping
+the pavers' south-west end for shade over an outdoor kitchen (galley along the outer wall, island bench) and a 6-seat
+table. ≈207 m². Walls 2.55 m to the plate, 15° hipped roof over both parts with a valley at the corner, 0.45 m eaves
+(ridge 3.64 m above the slab). Glass sliders facing the pool, windows on the other sides (high sills on the outer wall).
+About 10.1 m from the north boundary (inside the 10 m line), 8.4 m from the house.
