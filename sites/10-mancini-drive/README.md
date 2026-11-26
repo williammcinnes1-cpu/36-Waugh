@@ -41,8 +41,8 @@ mesh of House.IGS): terrain draped with the aerial, lot boundary (red), a line 1
 All taken from House.IGS and placed with the same fit as the house (`data/model_plan.json`, `data/model_to_mga.json`):
 pool 12.0 × 4.4 m with a 4.4 × 2.4 m step-out (≈1.9 m deep); pavers 15.8 × 9.844 m as dimensioned on the client's
 drawing (Pool-House.PDF; pool set 1.6 m in from the pavers); a 0.32 × 10.0 m wall, 1.55 m high, on the pavers'
-north-east end; and the planned pool house slab, 15.8 × 6.1 m, on the far side of the pool from the house, about
-2.0 m from the pavers and 10.1 m from the north boundary (just inside the 10 m line), shown 3.5 m high. A Google Maps trace tried
+north-east end; and the planned pool house, 15.8 × 8.1 m (the IGES slab of 6.1 m widened by 2.0 m to butt against the pavers, at the
+client's request), on the far side of the pool from the house, 10.1 m from the north boundary (just inside the 10 m line), shown 3.5 m high. A Google Maps trace tried
 earlier was discarded at the client's request.
 
 ## Known issue: house roof

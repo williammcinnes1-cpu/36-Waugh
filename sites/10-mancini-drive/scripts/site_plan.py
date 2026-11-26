@@ -118,7 +118,7 @@ def main():
     d.polygon([P(*c) for c in poolhouse.exterior.coords], fill=(255, 220, 120, 110), outline=(255, 200, 60, 255))
     d.line([P(*c) for c in poolhouse.exterior.coords], fill=(255, 190, 40, 255), width=4)
     qx, qy = P(poolhouse.centroid.x, poolhouse.centroid.y)
-    d.text((qx, qy), "PLANNED POOL HOUSE\n15.8 × 6.1 m", font=F(14, True), fill="white", anchor="mm", align="center",
+    d.text((qx, qy), "PLANNED POOL HOUSE\n15.8 × 8.1 m", font=F(14, True), fill="white", anchor="mm", align="center",
            stroke_width=3, stroke_fill=(120, 80, 0))
     hx, hy = P(house.centroid.x, house.centroid.y)
     d.text((hx, hy), f"HOUSE\n(House.IGS, {house.area:.0f} m²)", font=F(15, True), fill="white", anchor="mm", align="center",
