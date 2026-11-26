@@ -91,7 +91,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     <dt>Fall</dt><dd id="f-fall">–</dd>
     <dt>House</dt><dd>from House.IGS</dd>
     <dt>Pool</dt><dd>12.0 × 4.4 m, pavers 15.8 × 9.844 m</dd>
-    <dt>Pool house</dt><dd>planned 15.8 × 6.1 m, 3.5 m high</dd>
+    <dt>Pool house</dt><dd>planned 15.8 × 8.1 m, 3.5 m high</dd>
   </dl>
   <div class="key">
     <label><span class="swatch" style="background: var(--boundary)"></span>Lot boundary</label>
@@ -302,7 +302,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   addLabel("House", hc[0], M.house_base, 6.5, -hc[1]);
   const pc = M.pool.water.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0]).map((v) => v / M.pool.water.length);
   addLabel("Pool", pc[0], M.pool.ground, 2, -pc[1]);
-  addLabel("Planned pool house 15.8 × 6.1 m", phc[0], M.pool.ground, 4.1, -phc[1]);
+  addLabel("Planned pool house 15.8 × 8.1 m", phc[0], M.pool.ground, 4.1, -phc[1]);
   addLabel("Mancini Drive", 62, 0.9, 1.5, 8);
   const v3 = new THREE.Vector3();
   function placeLabels() {
