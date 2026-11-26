@@ -57,7 +57,25 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   font-size: 10.5px; color: #fff; text-shadow: 0 0 3px #000; text-align: right; max-width: 60vw;
 }
 #status { position: fixed; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted); pointer-events: none; }
-@media (max-width: 560px) { .credit { bottom: calc(108px + env(safe-area-inset-bottom, 0px)); } }
+.sunbox {
+  position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px));
+  width: min(320px, calc(100vw - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12); backdrop-filter: blur(6px); display: grid; gap: 10px;
+}
+.sunbox h2 { font-size: 13px; margin: 0; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.sunrow { display: grid; gap: 4px; }
+.sunrow label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.sunrow output { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.sunrow input[type="range"] { width: 100%; accent-color: var(--accent); }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { font: 500 12px var(--sans); color: var(--ink); background: var(--btn); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.presets button:focus-visible, .sunrow input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#sunread { font-family: var(--mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) {
+  .sunbox { top: auto; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); width: auto; gap: 6px; padding: 10px 12px; }
+  .sunbox h2, .presets { display: none; }
+  .credit { display: none; }
+}
 </style>
 
 <div id="stage"></div>
@@ -83,6 +101,24 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   </div>
   <div class="note">Drag to rotate, pinch or scroll to zoom, two fingers or right-drag to pan. Levels from the NSW 5 m elevation grid, indicative only. Aerial Feb 2014. House, pool, pavers and planned pool house from House.IGS, placed by fitting the house to the roof in the aerial. The yellow box is the pool house footprint at an assumed 3 m height.</div>
 </details>
+
+<section class="sunbox" aria-label="Sun and shadows">
+  <h2>Sun and shadows</h2>
+  <div class="sunrow">
+    <label for="s-day"><span>Date</span><output id="o-day">21 June</output></label>
+    <input type="range" id="s-day" min="1" max="365" step="1" value="172">
+  </div>
+  <div class="sunrow">
+    <label for="s-time"><span>Time of day</span><output id="o-time">12:00 pm</output></label>
+    <input type="range" id="s-time" min="300" max="1260" step="5" value="720">
+  </div>
+  <div class="presets">
+    <button type="button" data-day="172">Winter 21 Jun</button>
+    <button type="button" data-day="265">Equinox 22 Sep</button>
+    <button type="button" data-day="356">Summer 22 Dec</button>
+  </div>
+  <div id="sunread">–</div>
+</section>
 
 <div class="views" role="group" aria-label="Camera views">
   <button id="v-over" aria-pressed="true">Overview</button>
@@ -128,7 +164,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   sun.position.set(-60, 90, 40);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 10, far: 300 });
+  Object.assign(sun.shadow.camera, { left: -75, right: 75, top: 75, bottom: -75, near: 10, far: 400 });
   sun.shadow.bias = -0.0004;
   scene.add(sun);
 
@@ -231,6 +267,7 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
   wallM.castShadow = true; poolGroup.add(wallM);
   poolGroup.add(prism(PL.poolhouse, pg0, pg0 + 0.07, new THREE.MeshLambertMaterial({ color: 0xd8d2c4 })));
   const ghost = prism(PL.poolhouse, pg0 + 0.07, pg0 + 3.0, new THREE.MeshLambertMaterial({ color: 0xffc845, transparent: true, opacity: 0.35, depthWrite: false }));
+  ghost.castShadow = true;
   poolGroup.add(ghost);
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(ghost.geometry), new THREE.LineBasicMaterial({ color: 0xe0a000 }));
   poolGroup.add(edges);
@@ -307,6 +344,58 @@ dd { margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric:
     camera.aspect = stage.clientWidth / stage.clientHeight; camera.updateProjectionMatrix();
     renderer.setSize(stage.clientWidth, stage.clientHeight);
   });
+  // ---- sun position (NOAA solar position) for the site, local NSW clock time incl. daylight saving
+  const LAT = -34.2278, LON = 146.0375, rad = Math.PI / 180;
+  function sunPos(utcMs) {
+    const jd = utcMs / 86400000 + 2440587.5, jc = (jd - 2451545) / 36525;
+    const l0 = (280.46646 + jc * (36000.76983 + jc * 0.0003032)) % 360;
+    const m = 357.52911 + jc * (35999.05029 - 0.0001537 * jc), e = 0.016708634 - jc * (0.000042037 + 0.0000001267 * jc);
+    const c = Math.sin(m * rad) * (1.914602 - jc * (0.004817 + 0.000014 * jc)) + Math.sin(2 * m * rad) * (0.019993 - 0.000101 * jc) + Math.sin(3 * m * rad) * 0.000289;
+    const lam = l0 + c - 0.00569 - 0.00478 * Math.sin((125.04 - 1934.136 * jc) * rad);
+    const eps = 23 + (26 + (21.448 - jc * (46.815 + jc * (0.00059 - jc * 0.001813))) / 60) / 60 + 0.00256 * Math.cos((125.04 - 1934.136 * jc) * rad);
+    const decl = Math.asin(Math.sin(eps * rad) * Math.sin(lam * rad));
+    const y = Math.tan(eps * rad / 2) ** 2;
+    const eqt = 4 / rad * (y * Math.sin(2 * l0 * rad) - 2 * e * Math.sin(m * rad) + 4 * e * y * Math.sin(m * rad) * Math.cos(2 * l0 * rad)
+      - 0.5 * y * y * Math.sin(4 * l0 * rad) - 1.25 * e * e * Math.sin(2 * m * rad));
+    const d = new Date(utcMs), mins = d.getUTCHours() * 60 + d.getUTCMinutes();
+    const ha = (((mins + eqt + 4 * LON) % 1440) + 1440) % 1440 / 4 - 180;
+    const lat = LAT * rad;
+    const cosz = Math.sin(lat) * Math.sin(decl) + Math.cos(lat) * Math.cos(decl) * Math.cos(ha * rad);
+    const zen = Math.acos(Math.max(-1, Math.min(1, cosz)));
+    const az = (Math.atan2(Math.sin(ha * rad), Math.cos(ha * rad) * Math.sin(lat) - Math.tan(decl) * Math.cos(lat)) / rad + 180 + 360) % 360;
+    return { az, el: 90 - zen / rad };
+  }
+  const YEAR = 2026;
+  const firstSunday = (month) => { const d = new Date(Date.UTC(YEAR, month, 1)); return 1 + (7 - d.getUTCDay()) % 7; };
+  const dstStart = Date.UTC(YEAR, 9, firstSunday(9)), dstEnd = Date.UTC(YEAR, 3, firstSunday(3));   // first Sun Oct / first Sun Apr
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const sDay = document.getElementById("s-day"), sTime = document.getElementById("s-time");
+  const sunTarget = new THREE.Object3D(); sunTarget.position.set(phc[0], 0, -phc[1]); scene.add(sunTarget); sun.target = sunTarget;
+  const hemi = scene.children.find((o) => o.isHemisphereLight);
+  function updateSun() {
+    const day = +sDay.value, minutes = +sTime.value;
+    const date = new Date(Date.UTC(YEAR, 0, day));
+    const dst = date.getTime() >= dstStart || date.getTime() < dstEnd;
+    const offset = dst ? 11 : 10;
+    const utc = date.getTime() + (minutes - offset * 60) * 60000;
+    const { az, el } = sunPos(utc);
+    const h = Math.floor(minutes / 60), mm = String(minutes % 60).padStart(2, "0");
+    document.getElementById("o-day").textContent = `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]}`;
+    document.getElementById("o-time").textContent = `${(h + 11) % 12 + 1}:${mm} ${h < 12 ? "am" : "pm"} ${dst ? "AEDT" : "AEST"}`;
+    const up = Math.max(el, 0);
+    const dir = new THREE.Vector3(Math.sin(az * rad) * Math.cos(up * rad), Math.sin(up * rad), -Math.cos(az * rad) * Math.cos(up * rad));
+    sun.position.copy(sunTarget.position).addScaledVector(dir, 150);
+    sun.intensity = el > 0 ? 0.35 + 0.6 * Math.min(1, el / 25) : 0;
+    if (hemi) hemi.intensity = el > 0 ? 0.55 + 0.25 * Math.min(1, el / 30) : 0.35;
+    const comp = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(az / 45) % 8];
+    const len = el > 0.5 ? (3.0 / Math.tan(el * rad)) : Infinity;
+    document.getElementById("sunread").textContent = el > 0
+      ? `Sun ${el.toFixed(0)}° up from the ${comp} (${az.toFixed(0)}°). A 3 m wall casts a ${len < 100 ? len.toFixed(1) + " m" : "very long"} shadow.`
+      : "Sun is below the horizon.";
+  }
+  sDay.addEventListener("input", updateSun); sTime.addEventListener("input", updateSun);
+  document.querySelectorAll(".presets button").forEach((b) => b.addEventListener("click", () => { sDay.value = b.dataset.day; updateSun(); }));
+  updateSun();
   status.hidden = true;
   (function loop(now) {
     if (anim) {
